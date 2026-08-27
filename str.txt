@@ -1,0 +1,145 @@
+SIH2026_ANi/                          ← PashuRaksha (Livestock Health Surveillance)
+│
+├── docker-compose.yml                ← Single service "app" (container: SIH2026_ANI, port 80)
+├── Dockerfile                        ← Multi-stage: Node→Maven→Python→Ubuntu+PG16
+├── entrypoint.sh                     ← Startup: init PostgreSQL, load schema, launch supervisord
+├── supervisord.conf                  ← Manages 4 processes: pg, java, python, nginx
+├── nginx-all-in-one.conf             ← Reverse proxy: /api/→8080, /ai/→5000
+├── .dockerignore
+├── .gitignore
+│
+├── frontend/                         ← React + TypeScript + Vite + Tailwind CSS
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
+│   ├── dist/                         ← Build output (served by nginx inside container)
+│   └── src/
+│       ├── main.tsx                  ← Entry point
+│       ├── App.tsx                   ← Router setup
+│       ├── index.css                 ← Tailwind imports
+│       ├── api/
+│       │   └── client.ts             ← Axios instance (baseURL: /api/v1 or localhost:8080)
+│       ├── context/
+│       │   └── AuthContext.tsx        ← Login/logout/token/user state management
+│       ├── types/
+│       │   └── index.ts              ← TypeScript interfaces (User, Animal, Farm, Case etc)
+│       ├── hooks/
+│       │   ├── useAuth.ts            ← Auth hook (login, logout, register)
+│       │   ├── useCases.ts           ← Disease cases CRUD hook
+│       │   ├── useFacilities.ts      ← Farms/Animals/Vaccinations hook
+│       │   └── useMap.ts             ← Map/geolocation hook
+│       ├── components/
+│       │   ├── Layout.tsx            ← Main layout with sidebar + content area
+│       │   ├── Sidebar.tsx           ← Navigation sidebar (role-based menu)
+│       │   ├── ProtectedRoute.tsx    ← Auth guard (redirect to /login if not logged in)
+│       │   ├── StatsCard.tsx         ← Dashboard stat cards
+│       │   └── RiskBadge.tsx         ← Risk level badge (LOW/MEDIUM/HIGH/CRITICAL)
+│       ├── pages/
+│       │   ├── LoginPage.tsx         ← Login form
+│       │   ├── DashboardPage.tsx     ← Main dashboard (stats overview)
+│       │   ├── DiseaseMapPage.tsx    ← Map view of disease cases (Leaflet?)
+│       │   ├── CasesPage.tsx         ← Disease cases list
+│       │   ├── CaseDetailPage.tsx    ← Single case detail view
+│       │   ├── ReportDiseasePage.tsx ← Report new disease case form
+│       │   ├── VaccinationsPage.tsx  ← Vaccination records list
+│       │   ├── LaboratoryPage.tsx    ← Lab sample tracking
+│       │   ├── RiskDashboardPage.tsx ← AI risk analysis dashboard
+│       │   ├── AnalyticsPage.tsx     ← Analytics/charts
+│       │   └── AdminPage.tsx         ← Admin panel (user management)
+│       └── assets/                   ← Static assets (images etc)
+│
+├── backend/                          ← Spring Boot 3.4 + Java 21 + Maven
+│   ├── pom.xml                       ← Dependencies: Spring Security, JPA, PostgreSQL, JWT, Lombok
+│   └── src/main/java/com/pashuraksha/api/
+│       ├── PashuRakshaApplication.java   ← Main entry point (@SpringBootApplication)
+│       │
+│       ├── config/                        ← Configuration
+│       │   ├── SecurityConfig.java        ← Spring Security: JWT filter, CSRF disabled, CORS, permitAll
+│       │   └── CorsConfig.java            ← WebMvc CORS config
+│       │
+│       ├── security/                      ← Security layer
+│       │   ├── JwtTokenProvider.java      ← Create/validate JWT tokens, extract username
+│       │   ├── JwtAuthenticationFilter.java ← OncePerRequestFilter, extracts JWT from Authorization header
+│       │   └── CustomUserDetailsService.java ← Loads User from DB for Spring Security
+│       │
+│       ├── dto/                           ← Data Transfer Objects (request/response)
+│       │   ├── LoginRequest.java          ← { username, password }
+│       │   ├── RegisterRequest.java       ← { username, password, name, phone, role }
+│       │   ├── AuthResponse.java          ← { token, username, role }
+│       │   ├── CaseCreateRequest.java     ← { animalId, symptoms, severity, location }
+│       │   └── DashboardStats.java        ← { totalCases, activeCases, vaccinatedCount... }
+│       │
+│       ├── auth/                          ← Authentication module
+│       │   ├── User.java                  ← @Entity: id, username, password, name, phone, role (ENUM), enabled
+│       │   ├── UserRepository.java        ← JPA repository
+│       │   ├── AuthService.java           ← login() validates password + generates JWT, register() creates user
+│       │   └── AuthController.java        ← POST /api/v1/auth/login, POST /api/v1/auth/register
+│       │
+│       ├── farmers/                       ← Farmer profiles
+│       │   ├── Farmer.java                ← @Entity: id, name, phone, village, block, district, userId
+│       │   └── FarmerRepository.java
+│       │
+│       ├── farms/                         ← Farm registry
+│       │   ├── Farm.java                  ← @Entity: id, name, location, latitude, longitude, owner_id
+│       │   ├── FarmRepository.java
+│       │   ├── FarmService.java
+│       │   └── FarmController.java        ← CRUD /api/v1/farms
+│       │
+│       ├── animals/                       ← Animal records
+│       │   ├── Animal.java                ← @Entity: id, name, species, breed, tagNumber, gender, farmId
+│       │   ├── AnimalRepository.java
+│       │   ├── AnimalService.java
+│       │   └── AnimalController.java      ← CRUD /api/v1/animals
+│       │
+│       ├── cases/                         ← Disease cases
+│       │   ├── DiseaseCase.java           ← @Entity: id, caseNumber, animalId, reportedBy, symptoms, severity, status, riskScore, location(PostGIS)
+│       │   ├── DiseaseCaseRepository.java ← Nearby cases query (PostGIS), HQL queries
+│       │   ├── CaseService.java           ← CRUD + assignVeterinarian + updateStatus
+│       │   └── CaseController.java        ← CRUD /api/v1/cases + /nearby + /assign
+│       │
+│       ├── vaccinations/                  ← Vaccination records
+│       │   ├── Vaccination.java           ← @Entity: id, animalId, vaccineName, batchNumber, administeredBy
+│       │   ├── VaccinationRepository.java
+│       │   ├── VaccinationService.java
+│       │   └── VaccinationController.java ← CRUD /api/v1/vaccinations
+│       │
+│       ├── laboratories/                  ← Lab sample tracking
+│       │   ├── LabSample.java             ← @Entity: id, sampleNumber, caseId, type, status, results
+│       │   ├── LabSampleRepository.java
+│       │   ├── LabService.java
+│       │   └── LabController.java         ← CRUD /api/v1/lab-samples
+│       │
+│       ├── alerts/                        ← Alert system
+│       │   ├── Alert.java                 ← @Entity: id, title, message, severity, district, isRead
+│       │   ├── AlertRepository.java
+│       │   ├── AlertService.java
+│       │   └── AlertController.java       ← CRUD /api/v1/alerts + /unread
+│       │
+│       ├── analytics/                     ← Dashboard analytics
+│       │   ├── AnalyticsService.java      ← Stats queries (by disease, by district, vaccination coverage)
+│       │   └── AnalyticsController.java   ← GET /api/v1/analytics/dashboard, /by-disease, /by-district
+│       │
+│       ├── locations/                     ← Geographic locations (Village/Block/District/State)
+│       │   ├── Location.java              ← @Entity: id, name, type(ENUM), code, parentCode, geometry(PostGIS)
+│       │   ├── LocationRepository.java
+│       │   ├── LocationService.java
+│       │   └── LocationController.java    ← CRUD /api/v1/locations
+│       │
+│       ├── risk/                          ← AI risk scoring (calls Python AI service)
+│       │   ├── RiskService.java           ← Calls http://127.0.0.1:5000/api/v1/risk/calculate
+│       │   └── RiskController.java        ← POST /api/v1/risk/calculate, GET /api/v1/risk/clusters
+│       │
+│       ├── users/                         ← (empty/unused module)
+│       └── veterinary/                    ← (empty/unused module)
+│
+├── ai-service/                        ← Python FastAPI AI Microservice
+│   ├── main.py                        ← FastAPI app: /risk/calculate, /risk/clusters, /health
+│   ├── risk_engine.py                 ← Rule-based risk scoring (symptoms + species + location)
+│   ├── cluster_detection.py           ← Haversine-based disease cluster detection
+│   ├── requirements.txt               ← fastapi, uvicorn, pydantic, numpy, pandas, requests
+│   ├── .env
+│   └── Dockerfile                     ← (legacy, not used in all-in-one)
+│
+└── database/
+    └── init.sql                       ← Full PostgreSQL schema: 9 tables, ENUM types, indexes, sample data
