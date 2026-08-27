@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: SIH2026_ANI
+    ports:
+      - "80:80"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/pashuraksha_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: david
+      DATABASE_URL: postgresql://postgres:david@localhost:5432/pashuraksha_db
+    restart: unless-stopped
