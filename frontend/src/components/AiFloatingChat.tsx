@@ -1,6 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, Camera, FileText, CheckCircle, Mic, MicOff, Shield, Pill, Clock, Users, MapPin, Activity } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Camera, FileText, CheckCircle, Mic, MicOff, Shield, Pill, Clock, Users, MapPin, Activity, Volume2, Navigation } from 'lucide-react';
 import apiClient from '../api/client';
+
+// --- Language Configuration ---
+const LANGUAGES = [
+  { code: 'hi-IN', name: 'हिन्दी', label: 'Hindi' },
+  { code: 'mr-IN', name: 'मराठी', label: 'Marathi' },
+  { code: 'bn-IN', name: 'বাংলা', label: 'Bengali' },
+  { code: 'pa-IN', name: 'ਪੰਜਾਬੀ', label: 'Punjabi' },
+  { code: 'te-IN', name: 'తెలుగు', label: 'Telugu' },
+  { code: 'ta-IN', name: 'தமிழ்', label: 'Tamil' },
+  { code: 'gu-IN', name: 'ગુજરાતી', label: 'Gujarati' },
+  { code: 'en-IN', name: 'English', label: 'English' },
+];
 
 interface ChatMessage {
   id: string;
@@ -61,7 +73,7 @@ export default function AiFloatingChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '0', role: 'ai',
-      text: "Namaste! 🙏 I'm PashuRaksha AI — your livestock health assistant.\n\n🔬 Describe symptoms or upload a photo\n💊 I'll give you disease + treatment + drugs\n📊 Area outbreak status + herd risk\n🎤 You can also use voice input\n\nWhat's happening with your animal?",
+      text: "Namaste! 🙏 I'm PashuRaksha AI — your livestock health assistant.\n\n🔬 Describe symptoms or upload a photo\n💊 I'll give you disease + treatment + drugs\n📊 Area outbreak status + herd risk\n🎤 Speak in your language (Hindi, Marathi, Bengali...)\n📍 Auto GPS location capture\n\nWhat's happening with your animal?",
       timestamp: new Date(),
     },
   ]);
@@ -71,6 +83,10 @@ export default function AiFloatingChat() {
   const [district, setDistrict] = useState('Palghar');
   const [showDetails, setShowDetails] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [selectedLang, setSelectedLang] = useState('hi-IN');
+  const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -78,6 +94,90 @@ export default function AiFloatingChat() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const addMessage = (msg: ChatMessage) => setMessages(prev => [...prev, msg]);
+
+  // --- GPS Auto-Capture ---
+  const captureGPS = () => {
+    if (!navigator.geolocation) {
+      alert('GPS not supported on this device');
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGpsLoading(false);
+        addMessage({
+          id: Date.now().toString(), role: 'ai',
+          text: `📍 Location captured: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}\n\nThis will be used to check nearby cases and outbreaks in your area.`,
+          timestamp: new Date(),
+        });
+      },
+      () => {
+        setGpsLoading(false);
+        addMessage({
+          id: Date.now().toString(), role: 'ai',
+          text: `📍 Could not get GPS. Please allow location access or type your village/district name.`,
+          timestamp: new Date(),
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  // --- Text-to-Speech (Read AI response aloud) ---
+  const speakText = (text: string, msgId: string) => {
+    if (speakingId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingId(null);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    // Clean text: remove markdown bold, emojis for cleaner speech
+    const cleanText = text.replace(/\*\*/g, '').replace(/[🔬💊📊🎤📍⚠️🚨🟢🟡🔴⏱️💀💰🐄🐐🐃]/g, '').replace(/\n+/g, '. ');
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+
+    // Match TTS language to selected language
+    const langMap: Record<string, string> = {
+      'hi-IN': 'hi-IN', 'mr-IN': 'mr-IN', 'bn-IN': 'bn-IN', 'pa-IN': 'pa-IN',
+      'te-IN': 'te-IN', 'ta-IN': 'ta-IN', 'gu-IN': 'gu-IN', 'en-IN': 'en-IN',
+    };
+    utterance.lang = langMap[selectedLang] || 'hi-IN';
+    utterance.rate = 0.9;
+    utterance.onend = () => setSpeakingId(null);
+    utterance.onerror = () => setSpeakingId(null);
+
+    setSpeakingId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // --- Speech-to-Text (Voice Input) ---
+  const toggleVoice = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Voice input not supported. Use Chrome or Edge browser.');
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = selectedLang; // Uses selected language
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(prev => (prev + ' ' + transcript).trim());
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+    recognitionRef.current = recognition;
+    setIsListening(true);
+  };
 
   // --- Complete Diagnosis (text) ---
   const sendText = async (text?: string) => {
@@ -88,14 +188,15 @@ export default function AiFloatingChat() {
     setLoading(true);
 
     try {
-      const res = await apiClient.post('/diagnose/complete', {
+      const payload: Record<string, any> = {
         message: msg, animal_type: animalType, district, farm_animal_count: 12,
-      });
+      };
+      if (gpsLocation) { payload.latitude = gpsLocation.lat; payload.longitude = gpsLocation.lng; }
+      const res = await apiClient.post('/diagnose/complete', payload);
       const data: CompleteResponse = res.data;
       const responseText = buildResponseText(data);
       addMessage({ id: (Date.now() + 1).toString(), role: 'ai', text: responseText, data, timestamp: new Date() });
     } catch {
-      // Fallback to basic chat
       try {
         const res = await apiClient.post('/chat/advisory', { message: msg, animal_type: animalType });
         addMessage({ id: (Date.now() + 1).toString(), role: 'ai', text: res.data.response || 'Could not analyze.', data: res.data, timestamp: new Date() });
@@ -115,18 +216,17 @@ export default function AiFloatingChat() {
 
     setLoading(true);
     try {
-      // First get image prediction
       const formData = new FormData();
       formData.append('file', file);
       const imgRes = await apiClient.post('/detect/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       const imgResult = imgRes.data;
 
-      // Then get complete diagnosis with image context
-      const completeRes = await apiClient.post('/diagnose/complete', {
-        image_prediction: imgResult.prediction,
-        image_confidence: imgResult.confidence,
+      const payload: Record<string, any> = {
+        image_prediction: imgResult.prediction, image_confidence: imgResult.confidence,
         animal_type: animalType, district, farm_animal_count: 12,
-      });
+      };
+      if (gpsLocation) { payload.latitude = gpsLocation.lat; payload.longitude = gpsLocation.lng; }
+      const completeRes = await apiClient.post('/diagnose/complete', payload);
       const data: CompleteResponse = completeRes.data;
       const responseText = buildResponseText(data);
       addMessage({ id: (Date.now() + 1).toString(), role: 'ai', text: responseText, data, timestamp: new Date() });
@@ -135,44 +235,15 @@ export default function AiFloatingChat() {
     } finally { setLoading(false); if (fileRef.current) fileRef.current.value = ''; }
   };
 
-  // --- Voice Input ---
-  const toggleVoice = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Voice input not supported in this browser. Use Chrome or Edge.');
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'hi-IN'; // Hindi + English mixed
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(prev => prev + ' ' + transcript);
-      setIsListening(false);
-    };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-    recognition.start();
-    recognitionRef.current = recognition;
-    setIsListening(true);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); } };
 
-  // --- Build display text from complete response ---
   function buildResponseText(data: CompleteResponse): string {
-    if (!data.identified_disease) return data.diagnosis?.probable_disease ? `Identified: ${data.diagnosis.probable_disease}` : 'Could not identify disease clearly.';
+    if (!data.identified_disease) return 'Could not identify disease clearly. Please describe more symptoms.';
     const d = data.identified_disease;
     const conf = Math.round((data.confidence || 0) * 100);
     const risk = data.risk_level || 'UNKNOWN';
-    const emergency = data.diagnosis?.is_emergency ? '🚨 EMERGENCY' : '';
-    let text = `${emergency ? emergency + '\n' : ''}🔬 **${d}** (${conf}% confidence, ${risk} risk)\n`;
+    const emergency = data.diagnosis?.is_emergency ? '🚨 EMERGENCY\n' : '';
+    let text = `${emergency}🔬 **${d}** (${conf}%, ${risk} risk)\n`;
     if (data.intelligence?.outbreak_status) text += `\n${data.intelligence.outbreak_status.message}\n`;
     if (data.intelligence?.herd_risk && data.intelligence.herd_risk.risk_level !== 'LOW') text += `\n🐄 ${data.intelligence.herd_risk.message}\n`;
     if (data.treatment?.available) text += `\n⏱️ Recovery: ${data.treatment.recovery_time} | 💀 Mortality: ${data.treatment.mortality_rate}\n💰 Est. cost: ${data.treatment.estimated_cost.per_animal}`;
@@ -186,7 +257,6 @@ export default function AiFloatingChat() {
         <button onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 hover:scale-105 transition-all group">
           <MessageCircle className="h-6 w-6" />
           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold ring-2 ring-white">AI</span>
-          <span className="absolute bottom-full right-0 mb-2 hidden group-hover:block whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white shadow-lg">AI Disease Advisory</span>
         </button>
       )}
 
@@ -194,7 +264,7 @@ export default function AiFloatingChat() {
       {open && (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col w-[400px] h-[640px] rounded-2xl border border-gray-200 bg-white shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3">
+          <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20"><Bot className="h-4 w-4 text-white" /></div>
               <div>
@@ -202,21 +272,37 @@ export default function AiFloatingChat() {
                 <p className="text-[10px] text-indigo-200">Detect • Treat • Prevent</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <select value={animalType} onChange={e => setAnimalType(e.target.value)} className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] text-white border-0">
-                <option value="cattle" className="text-gray-900">Cattle</option>
-                <option value="buffalo" className="text-gray-900">Buffalo</option>
-                <option value="goat" className="text-gray-900">Goat</option>
-                <option value="sheep" className="text-gray-900">Sheep</option>
+            <div className="flex items-center gap-1">
+              {/* Language Selector */}
+              <select value={selectedLang} onChange={e => setSelectedLang(e.target.value)} className="rounded bg-white/20 px-1 py-0.5 text-[10px] text-white border-0 focus:outline-none" title="Voice language">
+                {LANGUAGES.map(l => <option key={l.code} value={l.code} className="text-gray-900">{l.name}</option>)}
               </select>
-              <select value={district} onChange={e => setDistrict(e.target.value)} className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] text-white border-0">
-                <option value="Palghar" className="text-gray-900">Palghar</option>
-                <option value="Thane" className="text-gray-900">Thane</option>
-                <option value="Nashik" className="text-gray-900">Nashik</option>
-                <option value="Pune" className="text-gray-900">Pune</option>
+              <select value={animalType} onChange={e => setAnimalType(e.target.value)} className="rounded bg-white/20 px-1 py-0.5 text-[10px] text-white border-0">
+                <option value="cattle" className="text-gray-900">🐄 Cattle</option>
+                <option value="buffalo" className="text-gray-900">🐃 Buffalo</option>
+                <option value="goat" className="text-gray-900">🐐 Goat</option>
+                <option value="sheep" className="text-gray-900">🐑 Sheep</option>
               </select>
               <button onClick={() => setOpen(false)} className="rounded-full p-1 hover:bg-white/20"><X className="h-4 w-4 text-white" /></button>
             </div>
+          </div>
+
+          {/* GPS + District Bar */}
+          <div className="flex items-center justify-between bg-gray-100 px-3 py-1.5 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <button onClick={captureGPS} disabled={gpsLoading} className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition ${gpsLocation ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700'}`}>
+                <Navigation className={`h-3 w-3 ${gpsLoading ? 'animate-spin' : ''}`} />
+                {gpsLocation ? `📍 ${gpsLocation.lat.toFixed(2)}, ${gpsLocation.lng.toFixed(2)}` : gpsLoading ? 'Getting GPS...' : '📍 Capture Location'}
+              </button>
+            </div>
+            <select value={district} onChange={e => setDistrict(e.target.value)} className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] focus:outline-none">
+              <option value="Palghar">Palghar</option>
+              <option value="Thane">Thane</option>
+              <option value="Nashik">Nashik</option>
+              <option value="Pune">Pune</option>
+              <option value="Nagpur">Nagpur</option>
+              <option value="Kolhapur">Kolhapur</option>
+            </select>
           </div>
 
           {/* Messages */}
@@ -227,20 +313,25 @@ export default function AiFloatingChat() {
                   {msg.image && <img src={msg.image} alt="" className="mb-2 rounded-lg max-h-28 w-auto" />}
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
 
+                  {/* 🔊 Read Aloud Button */}
+                  {msg.role === 'ai' && msg.text.length > 20 && (
+                    <button onClick={() => speakText(msg.text, msg.id)} className={`mt-1.5 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition ${speakingId === msg.id ? 'bg-indigo-100 text-indigo-700 animate-pulse' : 'bg-gray-100 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600'}`}>
+                      <Volume2 className="h-3 w-3" /> {speakingId === msg.id ? 'Stop' : 'Read Aloud 🔊'}
+                    </button>
+                  )}
+
                   {/* Complete Response Cards */}
                   {msg.data && msg.data.identified_disease && (
                     <div className="mt-2 space-y-2 border-t border-gray-100 pt-2">
-                      {/* Risk + Confidence Badge */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                           msg.data.risk_level === 'CRITICAL' ? 'bg-red-100 text-red-800' : msg.data.risk_level === 'HIGH' ? 'bg-orange-100 text-orange-800' : msg.data.risk_level === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
                         }`}>{msg.data.diagnosis?.is_emergency ? '🚨 ' : ''}{msg.data.risk_level}</span>
-                        <span className="text-[10px] text-gray-500">{Math.round((msg.data.confidence || 0) * 100)}% confidence</span>
+                        <span className="text-[10px] text-gray-500">{Math.round((msg.data.confidence || 0) * 100)}%</span>
                       </div>
 
                       {/* Expandable Sections */}
                       <div className="space-y-1">
-                        {/* First Aid */}
                         {msg.data.treatment?.available && (
                           <button onClick={() => setShowDetails(showDetails === msg.id + '_treatment' ? null : msg.id + '_treatment')} className="flex items-center gap-1.5 w-full text-left rounded-lg bg-green-50 px-2.5 py-1.5 text-[11px] font-medium text-green-800 hover:bg-green-100 transition">
                             <Pill className="h-3 w-3" /> First Aid & Treatment ▾
@@ -253,12 +344,11 @@ export default function AiFloatingChat() {
                             ))}
                             <p className="text-[10px] font-semibold text-green-700 mt-1">Drugs:</p>
                             {msg.data.treatment.drugs.slice(0, 3).map((drug, i) => (
-                              <div key={i} className="text-[10px] text-gray-600">• {drug.name} — {drug.dosage}</div>
+                              <div key={i} className="text-[10px] text-gray-600">• <strong>{drug.name}</strong> — {drug.dosage}</div>
                             ))}
                           </div>
                         )}
 
-                        {/* Severity Timeline */}
                         {msg.data.treatment?.severity_timeline && (
                           <button onClick={() => setShowDetails(showDetails === msg.id + '_timeline' ? null : msg.id + '_timeline')} className="flex items-center gap-1.5 w-full text-left rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100 transition">
                             <Clock className="h-3 w-3" /> Severity Timeline ▾
@@ -272,7 +362,6 @@ export default function AiFloatingChat() {
                           </div>
                         )}
 
-                        {/* Area Intelligence */}
                         {msg.data.intelligence && (
                           <button onClick={() => setShowDetails(showDetails === msg.id + '_intel' ? null : msg.id + '_intel')} className="flex items-center gap-1.5 w-full text-left rounded-lg bg-blue-50 px-2.5 py-1.5 text-[11px] font-medium text-blue-800 hover:bg-blue-100 transition">
                             <MapPin className="h-3 w-3" /> Area Intelligence ▾
@@ -280,14 +369,13 @@ export default function AiFloatingChat() {
                         )}
                         {showDetails === msg.id + '_intel' && msg.data.intelligence && (
                           <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 space-y-1.5 text-[10px]">
-                            <div className="flex items-center gap-1"><Activity className="h-3 w-3 text-blue-600" /> <span className="text-gray-700">{msg.data.intelligence.area_cases.summary}</span></div>
-                            <div className="flex items-center gap-1"><Shield className="h-3 w-3 text-blue-600" /> <span className="text-gray-700">{msg.data.intelligence.vaccination_status.message}</span></div>
-                            <div className="flex items-center gap-1"><Users className="h-3 w-3 text-blue-600" /> <span className="text-gray-700">{msg.data.intelligence.herd_risk.message}</span></div>
-                            <div className="text-gray-500">🌤️ {msg.data.intelligence.weather_risk.advisory}</div>
+                            <div className="flex items-center gap-1"><Activity className="h-3 w-3 text-blue-600" /> <span>{msg.data.intelligence.area_cases.summary}</span></div>
+                            <div className="flex items-center gap-1"><Shield className="h-3 w-3 text-blue-600" /> <span>{msg.data.intelligence.vaccination_status.message}</span></div>
+                            <div className="flex items-center gap-1"><Users className="h-3 w-3 text-blue-600" /> <span>{msg.data.intelligence.herd_risk.message}</span></div>
+                            <div>🌤️ {msg.data.intelligence.weather_risk.advisory}</div>
                           </div>
                         )}
 
-                        {/* Action Summary */}
                         {msg.data.action_summary && msg.data.action_summary.actions.length > 0 && (
                           <div className="rounded-lg bg-red-50 border border-red-100 px-2.5 py-2">
                             <p className="text-[10px] font-bold text-red-800 mb-1">⚡ Priority Actions ({msg.data.action_summary.urgency})</p>
@@ -298,18 +386,16 @@ export default function AiFloatingChat() {
                         )}
                       </div>
 
-                      {/* One-tap Report */}
                       {msg.data.action_summary?.auto_report_recommended && (
                         <a href="/report" className="flex items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-[11px] font-semibold text-white hover:bg-red-700 transition w-full">
                           <FileText className="h-3.5 w-3.5" /> File Disease Report Now
                         </a>
                       )}
 
-                      {/* Follow-up */}
                       {msg.data.diagnosis?.follow_up_questions && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {msg.data.diagnosis.follow_up_questions.slice(0, 2).map((q, i) => (
-                            <button key={i} onClick={() => sendText(q)} className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-indigo-700 hover:bg-indigo-100 transition">→ {q.slice(0, 35)}...</button>
+                            <button key={i} onClick={() => sendText(q)} className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-indigo-700 hover:bg-indigo-100 transition">→ {q.slice(0, 30)}...</button>
                           ))}
                         </div>
                       )}
@@ -350,17 +436,17 @@ export default function AiFloatingChat() {
               <button onClick={() => fileRef.current?.click()} disabled={loading} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-indigo-600 disabled:opacity-40 transition" title="Upload photo">
                 <Camera className="h-4 w-4" />
               </button>
-              <button onClick={toggleVoice} disabled={loading} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition ${isListening ? 'border-red-300 bg-red-50 text-red-600 animate-pulse' : 'border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-indigo-600'} disabled:opacity-40`} title="Voice input (Hindi/English)">
+              <button onClick={toggleVoice} disabled={loading} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition ${isListening ? 'border-red-300 bg-red-50 text-red-600 animate-pulse' : 'border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-indigo-600'} disabled:opacity-40`} title={`Voice (${LANGUAGES.find(l => l.code === selectedLang)?.label})`}>
                 {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </button>
               <div className="flex-1 relative">
-                <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isListening ? "🎤 Listening..." : "Describe symptoms..."} rows={1} className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 pr-10 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-100" />
+                <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isListening ? `🎤 Listening (${LANGUAGES.find(l => l.code === selectedLang)?.label})...` : "Describe symptoms..."} rows={1} className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 pr-10 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-100" />
                 <button onClick={() => sendText()} disabled={!input.trim() || loading} className="absolute right-2 bottom-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white disabled:opacity-30 hover:bg-indigo-700 transition">
                   <Send className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
-            {isListening && <p className="mt-1 text-center text-[10px] text-red-500 animate-pulse">🎤 Listening for Hindi/English... speak now</p>}
+            {isListening && <p className="mt-1 text-center text-[10px] text-red-500 animate-pulse">🎤 Listening ({LANGUAGES.find(l => l.code === selectedLang)?.name})... speak now</p>}
           </div>
         </div>
       )}

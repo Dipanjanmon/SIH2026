@@ -176,37 +176,59 @@ export default function ReportDiseasePage() {
           </select>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Latitude</label>
-            <input
-              type="number"
-              step="any"
-              value={form.latitude}
-              onChange={(e) => setForm({ ...form, latitude: e.target.value })}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">Location</label>
+            <button
+              type="button"
+              onClick={() => {
+                if (!navigator.geolocation) return;
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => setForm({ ...form, latitude: pos.coords.latitude.toString(), longitude: pos.coords.longitude.toString() }),
+                  () => {},
+                  { enableHighAccuracy: true, timeout: 10000 }
+                );
+              }}
+              className="flex items-center gap-1 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition"
+            >
+              📍 Auto-detect GPS
+            </button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Longitude</label>
-            <input
-              type="number"
-              step="any"
-              value={form.longitude}
-              onChange={(e) => setForm({ ...form, longitude: e.target.value })}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <input
+                type="number"
+                step="any"
+                value={form.latitude}
+                onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+                placeholder="Latitude"
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <input
+                type="number"
+                step="any"
+                value={form.longitude}
+                onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+                placeholder="Longitude"
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                value={form.district}
+                onChange={(e) => setForm({ ...form, district: e.target.value })}
+                placeholder="District"
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">District</label>
-            <input
-              type="text"
-              value={form.district}
-              onChange={(e) => setForm({ ...form, district: e.target.value })}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
+          {form.latitude && form.longitude && (
+            <p className="mt-1 text-xs text-green-600">📍 Location captured: {Number(form.latitude).toFixed(4)}, {Number(form.longitude).toFixed(4)}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
