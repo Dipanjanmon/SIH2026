@@ -6,6 +6,7 @@ import com.pashuraksha.api.alerts.AlertRepository;
 import com.pashuraksha.api.auth.User;
 import com.pashuraksha.api.auth.UserRepository;
 import com.pashuraksha.api.dto.CaseCreateRequest;
+import com.pashuraksha.api.notifications.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -26,6 +27,7 @@ public class CaseService {
     private final UserRepository userRepository;
     private final AiServiceClient aiServiceClient;
     private final AlertRepository alertRepository;
+    private final NotificationService notificationService;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     private static final AtomicLong caseCounter = new AtomicLong(1000);
@@ -137,6 +139,16 @@ public class CaseService {
                     .latitude(dc.getLatitude())
                     .longitude(dc.getLongitude())
                     .build());
+        }
+
+        // SMS notification simulation
+        try {
+            notificationService.notifyDiseaseAlert(
+                    dc.getDistrict() != null ? dc.getDistrict() : "Unknown",
+                    disease, riskLevel, dc.getCaseNumber(), dc.getId()
+            );
+        } catch (Exception e) {
+            System.err.println("[CaseService] SMS notification failed: " + e.getMessage());
         }
     }
 

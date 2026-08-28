@@ -1,13 +1,14 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
 from risk_engine import RiskEngine
 from cluster_detection import ClusterDetector
 from chat_engine import ChatEngine
 from image_detector import ImageDetector
+from weather_service import WeatherService
 from pydantic import BaseModel
 from typing import List, Optional
 
-app = FastAPI(title="PashuRaksha AI Service", version="2.0.0")
+app = FastAPI(title="PashuRaksha AI Service", version="2.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,6 +22,7 @@ risk_engine = RiskEngine()
 cluster_detector = ClusterDetector()
 chat_engine = ChatEngine()
 image_detector = ImageDetector()
+weather_service = WeatherService()
 
 
 # --- Models ---
@@ -67,7 +69,7 @@ class FusionRequest(BaseModel):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "pashuraksha-ai", "version": "2.0.0"}
+    return {"status": "healthy", "service": "pashuraksha-ai", "version": "2.1.0"}
 
 
 @app.post("/api/v1/risk/calculate")
@@ -214,6 +216,32 @@ def _fuse_predictions(chat_result: dict, image_result: dict) -> dict:
                 f"Clinical symptoms take priority for diagnosis."
             )
             return result
+
+
+# --- Weather Endpoints ---
+
+@app.get("/api/v1/weather")
+async def get_weather(district: str = Query(default="Palghar"), days: int = Query(default=7)):
+    """Get current weather + forecast for a district."""
+    return weather_service.get_weather(district, days)
+
+
+@app.get("/api/v1/weather/correlation")
+async def get_weather_correlation(district: str = Query(default="Palghar")):
+    """Get disease-weather risk correlation analysis for a district."""
+    return weather_service.get_disease_correlation(district)
+
+
+@app.get("/api/v1/weather/districts")
+async def get_available_districts():
+    """List all districts with coordinates available for weather analysis."""
+    from weather_service import DISTRICT_COORDS
+    return {
+        "districts": [
+            {"name": k.title(), "code": k, "latitude": v["lat"], "longitude": v["lng"]}
+            for k, v in DISTRICT_COORDS.items() if k != "default"
+        ]
+    }
 
 
 if __name__ == "__main__":

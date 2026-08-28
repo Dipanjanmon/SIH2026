@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import App from './App';
 import './index.css';
+import './utils/offlineSync'; // Register offline sync listener
 
 const queryClient = new QueryClient({
   defaultOptions: {

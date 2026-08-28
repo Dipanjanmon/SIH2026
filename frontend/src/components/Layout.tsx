@@ -1,4 +1,5 @@
 import Sidebar from "./Sidebar";
+import OfflineIndicator from "./OfflineIndicator";
 import { Bell, ChevronDown, Search, ShieldCheck } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
@@ -24,6 +25,7 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <OfflineIndicator />
       <Sidebar />
 
       <div className="ml-64">
