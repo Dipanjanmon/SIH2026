@@ -1,5 +1,6 @@
 import Sidebar from "./Sidebar";
 import OfflineIndicator from "./OfflineIndicator";
+import AiFloatingChat from "./AiFloatingChat";
 import { Bell, ChevronDown, Search, ShieldCheck } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
@@ -90,6 +91,8 @@ export default function Layout({ children }: LayoutProps) {
 
         <main className="p-8">{children}</main>
       </div>
+
+      <AiFloatingChat />
     </div>
   );
 }
