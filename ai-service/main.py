@@ -5,6 +5,8 @@ from cluster_detection import ClusterDetector
 from chat_engine import ChatEngine
 from image_detector import ImageDetector
 from weather_service import WeatherService
+from treatment_protocols import get_treatment_protocol
+from outbreak_intelligence import OutbreakIntelligence
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -23,6 +25,7 @@ cluster_detector = ClusterDetector()
 chat_engine = ChatEngine()
 image_detector = ImageDetector()
 weather_service = WeatherService()
+outbreak_intel = OutbreakIntelligence()
 
 
 # --- Models ---
@@ -60,9 +63,22 @@ class FusionRequest(BaseModel):
     message: Optional[str] = None
     animal_type: Optional[str] = None
     conversation_id: Optional[str] = None
-    # Image prediction results (passed from frontend after image detection)
     image_prediction: Optional[str] = None
     image_confidence: Optional[float] = None
+
+
+class CompleteDiagnosisRequest(BaseModel):
+    """Full diagnosis request with all context for complete intelligence."""
+    message: Optional[str] = None
+    animal_type: Optional[str] = None
+    district: Optional[str] = None
+    village: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    farm_animal_count: Optional[int] = 0
+    image_prediction: Optional[str] = None
+    image_confidence: Optional[float] = None
+    conversation_id: Optional[str] = None
 
 
 # --- Endpoints ---
@@ -216,6 +232,122 @@ def _fuse_predictions(chat_result: dict, image_result: dict) -> dict:
                 f"Clinical symptoms take priority for diagnosis."
             )
             return result
+
+
+# --- Complete Diagnosis Endpoint (combines ALL intelligence) ---
+
+@app.post("/api/v1/diagnose/complete")
+async def diagnose_complete(request: CompleteDiagnosisRequest):
+    """
+    THE flagship endpoint — combines:
+    - Symptom analysis (chat engine)
+    - Image prediction (if provided)
+    - Treatment protocol (drugs, first aid, timeline)
+    - Outbreak intelligence (area cases, vaccination, weather, herd risk)
+    
+    This is what makes PashuRaksha unique: not just detection, but full situational awareness.
+    """
+    result = {}
+
+    # 1. Disease identification (from symptoms or image)
+    disease_name = None
+    confidence = 0.0
+    risk_level = "UNKNOWN"
+
+    if request.message:
+        chat_result = chat_engine.analyze(request.message, request.animal_type, request.conversation_id)
+        disease_name = chat_result.get("probable_disease")
+        confidence = chat_result.get("confidence", 0.0)
+        risk_level = chat_result.get("risk_level", "UNKNOWN")
+        result["diagnosis"] = chat_result
+    
+    if request.image_prediction:
+        img_disease = request.image_prediction
+        img_conf = request.image_confidence or 0.0
+        
+        if disease_name and img_disease:
+            # Fusion: if both agree, boost confidence
+            chat_norm = (disease_name or "").lower()
+            img_norm = img_disease.lower()
+            if any(word in img_norm for word in chat_norm.split()[:2]):
+                confidence = min(0.98, confidence * 0.5 + img_conf * 0.5 + 0.15)
+                result["fusion"] = "agreement"
+            else:
+                result["fusion"] = "text_dominant" if confidence > img_conf else "image_dominant"
+                if img_conf > confidence:
+                    disease_name = img_disease
+                    confidence = img_conf
+        elif not disease_name:
+            disease_name = img_disease
+            confidence = img_conf
+            risk_level = "HIGH" if img_conf > 0.7 else "MEDIUM"
+        
+        result["image_analysis"] = {"prediction": img_disease, "confidence": img_conf}
+
+    if not disease_name:
+        return {
+            "error": "Could not identify disease. Describe symptoms or upload a clearer image.",
+            "diagnosis": None,
+        }
+
+    result["identified_disease"] = disease_name
+    result["confidence"] = round(confidence, 3)
+    result["risk_level"] = risk_level
+
+    # 2. Treatment protocol
+    treatment = get_treatment_protocol(disease_name)
+    result["treatment"] = treatment
+
+    # 3. Outbreak intelligence (area context)
+    district = request.district or "Palghar"
+    intel = outbreak_intel.get_area_intelligence(
+        district=district,
+        disease=disease_name,
+        latitude=request.latitude,
+        longitude=request.longitude,
+        farm_animal_count=request.farm_animal_count or 10,
+    )
+    result["intelligence"] = intel
+
+    # 4. Action summary (what should happen RIGHT NOW)
+    result["action_summary"] = _build_action_summary(disease_name, risk_level, intel, treatment)
+
+    return result
+
+
+def _build_action_summary(disease: str, risk_level: str, intel: dict, treatment: dict) -> dict:
+    """Build prioritized action list based on all intelligence."""
+    actions = []
+    urgency = "ROUTINE"
+
+    # Immediate actions from treatment
+    if treatment.get("available") and treatment.get("first_aid"):
+        actions.extend([{"priority": "NOW", "action": fa} for fa in treatment["first_aid"][:3]])
+
+    # Outbreak-driven actions
+    outbreak = intel.get("outbreak_status", {})
+    if outbreak.get("level") in ("CRITICAL", "HIGH"):
+        urgency = "EMERGENCY"
+        actions.insert(0, {"priority": "EMERGENCY", "action": "Report to veterinary authority IMMEDIATELY — outbreak detected in your area"})
+    elif risk_level in ("CRITICAL", "HIGH"):
+        urgency = "URGENT"
+        actions.insert(0, {"priority": "URGENT", "action": "Contact veterinarian within 24 hours"})
+
+    # Vaccination gap action
+    vac = intel.get("vaccination_status", {})
+    if vac.get("status") in ("BELOW_THRESHOLD", "CRITICALLY_LOW"):
+        actions.append({"priority": "IMPORTANT", "action": f"Area vaccination coverage is {vac.get('coverage_percent', 0)}% — below 80% threshold. Request vaccination drive."})
+
+    # Herd isolation action
+    herd = intel.get("herd_risk", {})
+    if herd.get("risk_level") in ("CRITICAL", "HIGH"):
+        actions.append({"priority": "NOW", "action": herd.get("message", "Isolate affected animal immediately")})
+
+    return {
+        "urgency": urgency,
+        "actions": actions[:8],
+        "auto_report_recommended": risk_level in ("CRITICAL", "HIGH") or outbreak.get("level") in ("CRITICAL", "HIGH"),
+    }
 
 
 # --- Weather Endpoints ---

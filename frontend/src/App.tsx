@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import AiFloatingChat from './components/AiFloatingChat';
 import GovDashboard from './pages/GovDashboard';
 import DashboardPage from './pages/DashboardPage';
 import CasesPage from './pages/CasesPage';
@@ -16,7 +17,8 @@ import ChatPage from './pages/ChatPage';
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route
         path="/"
@@ -131,5 +133,7 @@ export default function App() {
         }
       />
     </Routes>
+    <AiFloatingChat />
+    </>
   );
 }

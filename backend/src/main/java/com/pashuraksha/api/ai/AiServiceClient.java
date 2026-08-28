@@ -43,13 +43,17 @@ public class AiServiceClient {
         try {
             return restTemplate.postForObject(url, request, Map.class);
         } catch (Exception e) {
-            return Map.of(
-                "error", "AI fusion service unavailable",
-                "response", "Combined diagnosis unavailable. Try text or image analysis separately.",
-                "probable_disease", "",
-                "confidence", 0.0,
-                "risk_level", "UNKNOWN"
-            );
+            return Map.of("error", "AI fusion service unavailable");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> completeDiagnosis(Map<String, Object> request) {
+        String url = aiServiceUrl + "/api/v1/diagnose/complete";
+        try {
+            return restTemplate.postForObject(url, request, Map.class);
+        } catch (Exception e) {
+            return Map.of("error", "AI diagnosis service unavailable", "message", e.getMessage());
         }
     }
 
