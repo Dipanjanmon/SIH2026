@@ -1,1 +1,64 @@
 @import "tailwindcss";
+<<<<<<< HEAD
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-gov-50: #f0f4f8;
+  --color-gov-100: #d9e2ec;
+  --color-gov-500: #1b4d89;
+  --color-gov-700: #10335e;
+  --color-gov-800: #0b213f;
+  --color-gov-900: #061224;
+  --color-risk-low: #16a34a;
+  --color-risk-medium: #ca8a04;
+  --color-risk-high: #ea580c;
+  --color-risk-critical: #dc2626;
+}
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+  .dark body,
+  .dark {
+    @apply bg-gray-900 text-gray-100;
+  }
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+@keyframes pulse-orange {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+}
+
+.animate-pulse-critical {
+  animation: pulse-red 2s infinite;
+}
+
+.animate-pulse-high {
+  animation: pulse-orange 2.5s infinite;
+}
+
+.gis-grid {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+.dark .gis-grid {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 0);
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+=======
+>>>>>>> 75c08c974147a000c352e1c4f8528ef5332f1bfe

@@ -1,3 +1,23 @@
+<<<<<<< HEAD
+import { Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import GovDashboard from './pages/GovDashboard';
+
+export default function App() {
+  return (
+    <Routes>
+      <Route
+        path="*"
+        element={
+          <ProtectedRoute>
+            <GovDashboard />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  );
+}
+=======
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
@@ -67,3 +87,4 @@ function App() {
 }
 
 export default App;
+>>>>>>> 75c08c974147a000c352e1c4f8528ef5332f1bfe
