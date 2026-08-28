@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { useAuth } from '../context/AuthContext';
+import type { ReactNode } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import { LogOut, Home, AlertTriangle, User, Map } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

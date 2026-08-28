@@ -5,28 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
-<<<<<<< HEAD
     "@tanstack/react-query": "^5.102.5",
     "axios": "^1.20.0",
     "chart.js": "^4.5.1",
-    "leaflet": "^1.9.4",
-    "lucide-react": "^1.34.0",
-    "react": "^19.2.8",
-    "react-chartjs-2": "^5.3.1",
-=======
-    "@types/leaflet": "^1.9.22",
-    "axios": "^1.20.0",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.34.0",
     "react": "^19.2.8",
->>>>>>> 75c08c974147a000c352e1c4f8528ef5332f1bfe
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.8",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.18.2",
@@ -34,10 +26,7 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-<<<<<<< HEAD
     "@types/leaflet": "^1.9.22",
-=======
->>>>>>> 75c08c974147a000c352e1c4f8528ef5332f1bfe
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
