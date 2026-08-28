@@ -1,69 +1,135 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/Login';
-
-import FarmerDashboard from './pages/FarmerDashboard';
-
+import { Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
 import GovDashboard from './pages/GovDashboard';
+import DashboardPage from './pages/DashboardPage';
+import CasesPage from './pages/CasesPage';
+import CaseDetailPage from './pages/CaseDetailPage';
+import ReportDiseasePage from './pages/ReportDiseasePage';
+import DiseaseMapPage from './pages/DiseaseMapPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import LaboratoryPage from './pages/LaboratoryPage';
+import VaccinationsPage from './pages/VaccinationsPage';
+import RiskDashboardPage from './pages/RiskDashboardPage';
+import AdminPage from './pages/AdminPage';
+import LoginPage from './pages/LoginPage';
+import ChatPage from './pages/ChatPage';
 
-import Landing from './pages/Landing';
-import GovLogin from './pages/GovLogin';
-
-const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
-  const { token, role } = useAuth();
-  
-  if (!token) return <Navigate to="/login" />;
-  if (allowedRoles && role && !allowedRoles.includes(role)) return <Navigate to="/unauthorized" />;
-  
-  return <>{children}</>;
-};
-
-function AppRoutes() {
+export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/auth/department-of-ahd-login" element={<GovLogin />} />
-      
-      <Route 
-        path="/farmer/dashboard" 
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/"
         element={
-          <ProtectedRoute allowedRoles={['FARMER']}>
-            <FarmerDashboard />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/vet/*" 
-        element={
-          <ProtectedRoute allowedRoles={['VETERINARIAN']}>
-            <div className="p-8">Veterinarian Dashboard (Coming Soon)</div>
-          </ProtectedRoute>
-        } 
-      />
-      
-      <Route 
-        path="/ahd/surveillance-hq" 
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute>
             <GovDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-      
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cases"
+        element={
+          <ProtectedRoute>
+            <CasesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cases/:id"
+        element={
+          <ProtectedRoute>
+            <CaseDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/report"
+        element={
+          <ProtectedRoute>
+            <ReportDiseasePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/report-disease"
+        element={
+          <ProtectedRoute>
+            <ReportDiseasePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/map"
+        element={
+          <ProtectedRoute>
+            <DiseaseMapPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <AnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/laboratory"
+        element={
+          <ProtectedRoute>
+            <LaboratoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vaccinations"
+        element={
+          <ProtectedRoute>
+            <VaccinationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/risk"
+        element={
+          <ProtectedRoute>
+            <RiskDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute>
+            <ChatPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="*"
+        element={
+          <ProtectedRoute>
+            <GovDashboard />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
-
-function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
-  );
-}
-
-export default App;

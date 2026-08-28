@@ -1,30 +1,14 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgis/postgis:15-3.3
-    container_name: pashuraksha_db
-    environment:
-      POSTGRES_DB: pashuraksha
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: SIH2026_ANI
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pashuraksha_pgadmin
+      - "80:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@pashuraksha.local
-      PGADMIN_DEFAULT_PASSWORD: password
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/pashuraksha_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: david
+      DATABASE_URL: postgresql://postgres:david@localhost:5432/pashuraksha_db
     restart: unless-stopped
-
-volumes:
-  postgres_data:
