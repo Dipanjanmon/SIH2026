@@ -58,8 +58,10 @@ public class AiServiceClient {
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, Object> detectImage(MultipartFile file) {
-        String url = aiServiceUrl + "/api/v1/detect/image";
+    public Map<String, Object> detectImage(MultipartFile file, String language) {
+        String url = aiServiceUrl + "/api/v1/detect/image?language="
+                + java.net.URLEncoder.encode(language == null ? "en-IN" : language,
+                        java.nio.charset.StandardCharsets.UTF_8);
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);

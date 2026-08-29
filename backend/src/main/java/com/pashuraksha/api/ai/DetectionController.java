@@ -15,10 +15,12 @@ public class DetectionController {
     private final AiServiceClient aiServiceClient;
 
     @PostMapping("/image")
-    public ResponseEntity<Map<String, Object>> detectImage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> detectImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "language", required = false, defaultValue = "en-IN") String language) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "No file provided"));
         }
-        return ResponseEntity.ok(aiServiceClient.detectImage(file));
+        return ResponseEntity.ok(aiServiceClient.detectImage(file, language));
     }
 }

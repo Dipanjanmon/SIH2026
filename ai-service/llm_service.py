@@ -41,7 +41,7 @@ def _load_keys() -> List[str]:
     return keys
 
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 LANGUAGE_NAMES = {
@@ -111,6 +111,82 @@ class LLMService:
         )
         return self._call_with_failover(prompt)
 
+    def analyze_image(self, image_bytes: bytes, mime_type: str = "image/jpeg",
+                      language: str = "hi-IN", cnn_hint: str = "",
+                      symptoms: str = "") -> Optional[Dict]:
+        """
+        Multimodal: send the ACTUAL photo to Gemini (which can see it) along with
+        the local CNN's guess and any described symptoms. Gemini identifies the
+        animal + likely disease + gives advice in the farmer's language.
+
+        This is the catch-all for animals/diseases the CNN was never trained on
+        (buffalo, sheep, pig, specific goat diseases, etc.). Returns None if the
+        LLM is unavailable, so callers fall back to the CNN + rule-based path.
+
+        Returns a dict: {animal, disease, is_healthy, confidence_note, advice, raw}.
+        """
+        if not self.enabled or not self._available_keys() or not image_bytes:
+            return None
+
+        import base64
+        lang_name = LANGUAGE_NAMES.get(language, "Hindi")
+        b64 = base64.b64encode(image_bytes).decode("ascii")
+
+        hint = f"A local image model guessed: {cnn_hint}. " if cnn_hint else ""
+        symp = f"The farmer also describes: {symptoms}. " if symptoms else ""
+
+        # Ask for a compact, parseable answer AND farmer-friendly advice in one shot.
+        instruction = (
+            "You are PashuRaksha AI, a veterinary assistant for Indian farmers. "
+            "Look at this animal photo and assess its health. "
+            f"{hint}{symp}"
+            "Treat the local model's guess as a hint only — trust what you actually see. "
+            "Respond in STRICT JSON with these keys and nothing else:\n"
+            '{"animal": "<cattle|buffalo|goat|sheep|poultry|pig|other>", '
+            '"disease": "<most likely disease or \'appears healthy\'>", '
+            '"is_healthy": <true|false>, '
+            '"confidence": "<high|medium|low>", '
+            f'"advice": "<2-3 short sentences of first-aid + when to call a vet, written in {lang_name}>"}}\n'
+            "If the image is not an animal, set animal to 'other' and say so in advice. "
+            "Do NOT invent specific drug dosages — keep advice to first aid and vet referral."
+        )
+
+        parts = [
+            {"inline_data": {"mime_type": mime_type, "data": b64}},
+            {"text": instruction},
+        ]
+        # Vision + JSON needs more tokens and a longer read timeout than text rephrasing.
+        raw = self._call_parts(parts, max_tokens=600, read_timeout=25)
+        if not raw:
+            return None
+
+        return self._parse_vision_json(raw)
+
+    @staticmethod
+    def _parse_vision_json(raw: str) -> Dict:
+        """Extract the JSON object from the model's reply (it sometimes wraps it in
+        ```json fences or prose). Falls back to putting the whole text in advice."""
+        text = raw.strip()
+        # Strip code fences if present
+        if "```" in text:
+            import re
+            m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+            if m:
+                text = m.group(1)
+        # Grab the first {...} block
+        start, end = text.find("{"), text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            candidate = text[start:end + 1]
+            try:
+                data = json.loads(candidate)
+                data["raw"] = raw
+                return data
+            except Exception:
+                pass
+        # Couldn't parse — return the prose as advice so the farmer still gets help.
+        return {"animal": "unknown", "disease": "unknown", "is_healthy": None,
+                "confidence": "low", "advice": raw, "raw": raw}
+
     def _build_prompt(self, r: Dict, language: str, user_message: str) -> str:
         lang_name = LANGUAGE_NAMES.get(language, "Hindi")
         disease = r.get("identified_disease") or r.get("probable_disease") or "Unknown"
@@ -148,7 +224,13 @@ class LLMService:
         )
 
     def _call_with_failover(self, prompt: str) -> Optional[str]:
-        """Try each available key in order until one succeeds."""
+        """Text-only convenience wrapper around _call_parts."""
+        return self._call_parts([{"text": prompt}])
+
+    def _call_parts(self, parts: list, max_tokens: int = 400,
+                    read_timeout: int = 12) -> Optional[str]:
+        """Try each available key in order until one succeeds. `parts` is the Gemini
+        content parts list — text-only or text+inline image (multimodal)."""
         available = self._available_keys()
         if not available:
             return None
@@ -158,17 +240,26 @@ class LLMService:
                 url = GEMINI_URL_TEMPLATE.format(model=self.model)
                 resp = requests.post(
                     url,
-                    params={"key": key},
-                    headers={"Content-Type": "application/json"},
+                    # Auth via x-goog-api-key header — works for both legacy standard
+                    # keys and the newer authorization keys (AQ.* format). Query-param
+                    # (?key=) auth does NOT work for auth keys.
+                    headers={"Content-Type": "application/json", "x-goog-api-key": key},
                     json={
-                        "contents": [{"parts": [{"text": prompt}]}],
+                        "contents": [{"parts": parts}],
                         "generationConfig": {
                             "temperature": 0.4,
-                            "maxOutputTokens": 500,
+                            "maxOutputTokens": max_tokens,
                             "topP": 0.9,
+                            # Gemini 2.5 "thinks" before answering by default, which adds
+                            # real latency for a task that's just rephrasing known facts.
+                            # thinkingBudget=0 skips that step for fast, snappy replies.
+                            "thinkingConfig": {"thinkingBudget": 0},
                         },
                     },
-                    timeout=15,
+                    # (connect timeout, read timeout) — fail over to the next key fast
+                    # instead of leaving a farmer staring at a spinner. Vision needs
+                    # a longer read timeout than text.
+                    timeout=(5, read_timeout),
                 )
 
                 if resp.status_code == 200:

@@ -136,13 +136,25 @@ async def chat_advisory(request: ChatRequest):
 
 
 @app.post("/api/v1/detect/image")
-async def detect_image(file: UploadFile = File(...)):
+async def detect_image(file: UploadFile = File(...), language: str = "en-IN"):
     image_bytes = await file.read()
     if not image_bytes:
         return {"error": "Empty file", "prediction": None}
     result = image_detector.predict(image_bytes)
     result["filename"] = file.filename
     result["file_size_kb"] = round(len(image_bytes) / 1024, 1)
+
+    # Gemini vision catch-all: when the CNN is uncertain (low confidence), ask the
+    # multimodal LLM to look at the actual photo. This covers animals/diseases the
+    # CNN was never trained on (buffalo, sheep, pig, etc.). Falls back silently if
+    # no key. The CNN result stays; we add a 'vision' block alongside it.
+    if (result.get("confidence") or 0) < 0.70:
+        mime = file.content_type if (file.content_type or "").startswith("image/") else "image/jpeg"
+        cnn_hint = f"{result.get('prediction','')} ({int((result.get('confidence') or 0)*100)}pct)"
+        vision = llm_service.analyze_image(image_bytes, mime_type=mime,
+                                           language=language, cnn_hint=cnn_hint)
+        if vision:
+            result["vision"] = vision
     return result
 
 
