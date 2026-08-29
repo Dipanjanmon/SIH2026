@@ -40,6 +40,7 @@ public class Animal {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "farm_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private com.pashuraksha.api.farms.Farm farmId;
 
     @Enumerated(EnumType.STRING)

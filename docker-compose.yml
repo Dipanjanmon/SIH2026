@@ -1,14 +1,78 @@
+# PashuRaksha — one-command deploy: `docker compose up --build`
+# 4 services: postgres (PostGIS) -> ai (FastAPI+CNN) -> backend (Spring) -> frontend (nginx)
+# Access the app at http://localhost (port 80). Backend at :8080, AI at :5000.
+
 services:
-  app:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: pashuraksha_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pashuraksha
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # init.sql only creates extensions (postgis, uuid-ossp); Hibernate builds tables
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d pashuraksha"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  ai:
     build:
-      context: .
+      context: ./ai-service
       dockerfile: Dockerfile
-    container_name: SIH2026_ANI
+    container_name: pashuraksha_ai
+    environment:
+      # LLM keys are optional — system falls back to rule-based if absent.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_API_KEY_2: ${GEMINI_API_KEY_2:-}
+      GEMINI_API_KEY_3: ${GEMINI_API_KEY_3:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pashuraksha_backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pashuraksha
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: password
+      AI_SERVICE_URL: http://ai:5000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pashuraksha_frontend
     ports:
       - "80:80"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/pashuraksha_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: david
-      DATABASE_URL: postgresql://postgres:david@localhost:5432/pashuraksha_db
+    depends_on:
+      - backend
     restart: unless-stopped
+
+volumes:
+  pgdata:

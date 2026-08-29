@@ -24,6 +24,7 @@ public class Farm {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private com.pashuraksha.api.farmers.Farmer farmerId;
 
     @Column(nullable = false)
@@ -40,6 +41,7 @@ public class Farm {
 
     @JdbcTypeCode(SqlTypes.GEOMETRY)
     @Column(columnDefinition = "geometry(Point, 4326)")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private org.locationtech.jts.geom.Point location;
 
     @Builder.Default

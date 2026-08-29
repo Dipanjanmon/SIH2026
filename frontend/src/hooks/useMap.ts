@@ -6,7 +6,7 @@ export function useRiskZones() {
   return useQuery({
     queryKey: ['riskZones'],
     queryFn: async () => {
-      const res = await apiClient.get<RiskZone[]>('/risk-zones');
+      const res = await apiClient.get<RiskZone[]>('/risk/clusters');
       return res.data;
     },
   });

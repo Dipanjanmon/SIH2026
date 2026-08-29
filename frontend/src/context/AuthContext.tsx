@@ -1,4 +1,4 @@
-import { createContext, useState, useCallback } from 'react';
+﻿import { createContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { User, AuthResponse } from '../types';
 import apiClient from '../api/client';
@@ -48,4 +48,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
-

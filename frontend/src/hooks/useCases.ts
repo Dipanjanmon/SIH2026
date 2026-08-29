@@ -26,10 +26,8 @@ export function useCase(id: number | string) {
 export function useReportCase() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: FormData) => {
-      const res = await apiClient.post('/cases', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    mutationFn: async (data: Record<string, unknown>) => {
+      const res = await apiClient.post('/cases', data);
       return res.data;
     },
     onSuccess: () => {
@@ -42,7 +40,7 @@ export function useUpdateCaseStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const res = await apiClient.patch(`/cases/${id}/status`, { status });
+      const res = await apiClient.put(`/cases/${id}/status`, { status });
       return res.data;
     },
     onSuccess: () => {
@@ -65,7 +63,7 @@ export function useUpdateSampleResult() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, result, diseaseDetected }: { id: number; result: string; diseaseDetected: string }) => {
-      const res = await apiClient.patch(`/lab-samples/${id}/result`, { result, diseaseDetected });
+      const res = await apiClient.put(`/lab-samples/${id}/result`, { result, diseaseDetected });
       return res.data;
     },
     onSuccess: () => {

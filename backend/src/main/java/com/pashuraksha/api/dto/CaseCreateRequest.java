@@ -1,6 +1,5 @@
 package com.pashuraksha.api.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,14 +11,15 @@ import java.util.List;
 @AllArgsConstructor
 public class CaseCreateRequest {
 
-    @NotNull
-    private Long animalId;
+    private Long animalId;  // optional — farmer may not know tag number
 
     private List<String> symptoms;
 
     private String description;
 
     private String severity;
+
+    private String diseaseName;
 
     private Double latitude;
     private Double longitude;

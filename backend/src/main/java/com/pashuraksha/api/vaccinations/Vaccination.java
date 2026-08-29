@@ -23,6 +23,7 @@ public class Vaccination {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "animal_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private com.pashuraksha.api.animals.Animal animalId;
 
     @Column(nullable = false)
@@ -32,6 +33,7 @@ public class Vaccination {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "administered_by")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password"})
     private com.pashuraksha.api.auth.User administeredBy;
 
     private Integer doseNumber;

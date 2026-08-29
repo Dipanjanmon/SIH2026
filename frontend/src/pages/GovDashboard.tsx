@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import {
   Tag, AlertTriangle, ShieldCheck, FlaskRound, Truck, TrendingUp, ArrowDown,
   MapPin, BellRing, Download, PlusCircle, Activity, CheckCircle, Eye, Filter,
@@ -39,7 +39,7 @@ const ROLE_BANNERS: Record<string, { title: string; badge: string; badgeColor: s
     subtitle: 'Doorstep livestock healthcare, outbreak response, and vaccination verification',
   },
   FARMER: {
-    title: 'Pashu Swasthya Farmer Portal · My Livestock Records',
+    title: 'Pashu Swasthya Farmer Portal ┬╖ My Livestock Records',
     badge: 'Farmer Portal',
     badgeColor: 'bg-emerald-500 text-white',
     subtitle: 'Track your tagged animal vaccinations, disease alerts in your Panchayat, and 1962 requests',
@@ -145,7 +145,7 @@ function GisMap({ expanded }: { expanded: boolean }) {
           className={`absolute -translate-x-1/2 -translate-y-1/2 ${SEVERITY_COLOR[node.severity]} ${SEVERITY_PULSE[node.severity]} text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/30 hover:scale-110 transition`}
           style={{ top: node.top, left: node.left }}
           onClick={() => undefined}
-          title={`${node.name} · ${node.disease}`}
+          title={`${node.name} ┬╖ ${node.disease}`}
         >
           {node.label}
           <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] text-white bg-black/70 px-1 rounded pointer-events-none">
@@ -170,7 +170,8 @@ export default function GovDashboard() {
   const isDark = theme === 'dark';
 
   const [activeTab, setActiveTab] = useState<GovTab>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  // Default the command-center sidebar open on desktop, collapsed on phones (<1024px).
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => window.innerWidth >= 1024);
   const [stateFilter, setStateFilter] = useState<string>('ALL');
   const [diseaseFilter, setDiseaseFilter] = useState<string>('ALL');
   const [, setTimeframe] = useState<string>('Last 30 Days');
@@ -395,7 +396,7 @@ export default function GovDashboard() {
                   <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-gray-700">
                     <div className="flex items-center space-x-2 text-slate-700 dark:text-slate-200">
                       <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-semibold">Live GIS Disease Outbreak Map · India Command Center</span>
+                      <span className="text-sm font-semibold">Live GIS Disease Outbreak Map ┬╖ India Command Center</span>
                     </div>
                     <button className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline"
                       onClick={() => setActiveTab('gis-map')}>
@@ -484,7 +485,7 @@ export default function GovDashboard() {
               <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
                 <div className="flex items-center space-x-2 mb-3 text-slate-700 dark:text-slate-200">
                   <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-semibold">Disease Surveillance Trend · National Outbreak Decline</span>
+                  <span className="text-sm font-semibold">Disease Surveillance Trend ┬╖ National Outbreak Decline</span>
                 </div>
                 <div className="h-64">
                   <Line data={lineData} options={lineOptions} />
@@ -500,7 +501,7 @@ export default function GovDashboard() {
                 <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-gray-700">
                   <div className="flex items-center space-x-2 text-slate-700 dark:text-slate-200">
                     <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm font-semibold">National GIS Disease Outbreak Map · India Command Center</span>
+                    <span className="text-sm font-semibold">National GIS Disease Outbreak Map ┬╖ India Command Center</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <button className="p-1.5 rounded border border-slate-200 dark:border-gray-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-gray-700"><Plus className="w-4 h-4" /></button>
@@ -765,10 +766,10 @@ export default function GovDashboard() {
               </p>
               <div className="mt-4 space-y-2">
                 {[
-                  'Weekly Outbreak Intelligence Bulletin · Aug 2026',
-                  'NADCP Vaccination Coverage Report · Q2 2026',
-                  'Lumpy Skin Disease Situation Update · July 2026',
-                  'Avian Influenza Surveillance Compendium · H5N1',
+                  'Weekly Outbreak Intelligence Bulletin ┬╖ Aug 2026',
+                  'NADCP Vaccination Coverage Report ┬╖ Q2 2026',
+                  'Lumpy Skin Disease Situation Update ┬╖ July 2026',
+                  'Avian Influenza Surveillance Compendium ┬╖ H5N1',
                 ].map((r) => (
                   <div key={r} className="flex items-center justify-between border border-slate-200 dark:border-gray-700 rounded-lg p-3 hover:bg-slate-50 dark:hover:bg-gray-900">
                     <span className="text-xs text-slate-700 dark:text-slate-200">{r}</span>

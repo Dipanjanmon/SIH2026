@@ -20,6 +20,7 @@ public class Farmer {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password"})
     private com.pashuraksha.api.auth.User userId;
 
     @Column(nullable = false)

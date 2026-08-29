@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,5 +33,21 @@ public class AnalyticsController {
     @GetMapping("/vaccination-coverage")
     public ResponseEntity<Map<String, Object>> getVaccinationCoverage() {
         return ResponseEntity.ok(analyticsService.getVaccinationCoverage());
+    }
+
+    @GetMapping("/trends")
+    public ResponseEntity<Map<String, Object>> getCaseTrends(
+            @RequestParam(defaultValue = "30") int days) {
+        return ResponseEntity.ok(analyticsService.getCaseTrends(days));
+    }
+
+    @GetMapping("/disease-trends")
+    public ResponseEntity<List<Map<String, Object>>> getDiseaseTrends() {
+        return ResponseEntity.ok(analyticsService.getDiseaseTrends());
+    }
+
+    @GetMapping("/severity-distribution")
+    public ResponseEntity<Map<String, Long>> getSeverityDistribution() {
+        return ResponseEntity.ok(analyticsService.getSeverityDistribution());
     }
 }
