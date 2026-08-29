@@ -444,7 +444,7 @@ export default function AiFloatingChat() {
                 {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </button>
               <div className="flex-1 relative">
-                <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isListening ? `🎤 Listening (${LANGUAGES.find(l => l.code === selectedLang)?.label})...` : "Describe symptoms..."} rows={1} className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 pr-10 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-100" />
+                <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isListening ? `🎤 Listening (${LANGUAGES.find(l => l.code === selectedLang)?.label})...` : "Describe symptoms..."} rows={1} className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 pr-10 text-sm text-gray-900 placeholder-gray-500 bg-white focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-100" />
                 <button onClick={() => sendText()} disabled={!input.trim() || loading} className="absolute right-2 bottom-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white disabled:opacity-30 hover:bg-indigo-700 transition">
                   <Send className="h-3.5 w-3.5" />
                 </button>
