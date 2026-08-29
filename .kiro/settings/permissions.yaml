@@ -1,0 +1,34 @@
+allow:
+  - command: "*"
+    shell: "*"
+  - tool: execute_pwsh
+    command: "*"
+  - tool: control_pwsh_process
+    command: "*"
+  - tool: fs_write
+    path: "*"
+  - tool: fs_append
+    path: "*"
+  - tool: str_replace
+    path: "*"
+  - tool: read_file
+    path: "*"
+  - tool: delete_file
+    path: "*"
+  - tool: grep_search
+    query: "*"
+  - tool: file_search
+    query: "*"
+  - tool: list_directory
+    path: "*"
+  - tool: read_code
+    path: "*"
+  - tool: remote_web_search
+    query: "*"
+  - tool: web_fetch
+    url: "*"
+  - tool: invoke_sub_agent
+    name: "*"
+
+allow:
+  - tool: "*"

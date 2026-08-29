@@ -54,3 +54,8 @@ frontend/dist/
 .idea/
 .vscode/
 *.iml
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+frontend/.playwright/
