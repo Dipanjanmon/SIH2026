@@ -7,10 +7,11 @@ from image_detector import ImageDetector
 from weather_service import WeatherService
 from treatment_protocols import get_treatment_protocol
 from outbreak_intelligence import OutbreakIntelligence
+from llm_service import LLMService
 from pydantic import BaseModel
 from typing import List, Optional
 
-app = FastAPI(title="PashuRaksha AI Service", version="2.1.0")
+app = FastAPI(title="PashuRaksha AI Service", version="2.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +27,7 @@ chat_engine = ChatEngine()
 image_detector = ImageDetector()
 weather_service = WeatherService()
 outbreak_intel = OutbreakIntelligence()
+llm_service = LLMService()
 
 
 # --- Models ---
@@ -56,6 +58,7 @@ class ChatRequest(BaseModel):
     message: str
     animal_type: Optional[str] = None
     conversation_id: Optional[str] = None
+    language: Optional[str] = "en-IN"
 
 
 class FusionRequest(BaseModel):
@@ -79,13 +82,24 @@ class CompleteDiagnosisRequest(BaseModel):
     image_prediction: Optional[str] = None
     image_confidence: Optional[float] = None
     conversation_id: Optional[str] = None
+    language: Optional[str] = "en-IN"
 
 
 # --- Endpoints ---
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "pashuraksha-ai", "version": "2.1.0"}
+    return {
+        "status": "healthy",
+        "service": "pashuraksha-ai",
+        "version": "2.2.0",
+        "llm": llm_service.status(),
+    }
+
+
+@app.get("/api/v1/llm/status")
+async def llm_status():
+    return llm_service.status()
 
 
 @app.post("/api/v1/risk/calculate")
@@ -113,6 +127,11 @@ async def chat_advisory(request: ChatRequest):
         request.animal_type,
         request.conversation_id
     )
+    # LLM enhancement: rephrase in the farmer's language (falls back to rule-based)
+    if result.get("probable_disease"):
+        result = llm_service.enhance_diagnosis(
+            result, request.language or "en-IN", request.message
+        )
     return result
 
 
@@ -311,6 +330,14 @@ async def diagnose_complete(request: CompleteDiagnosisRequest):
 
     # 4. Action summary (what should happen RIGHT NOW)
     result["action_summary"] = _build_action_summary(disease_name, risk_level, intel, treatment)
+
+    # 5. LLM enhancement — natural-language summary in farmer's language.
+    #    Rule-based facts stay authoritative; LLM only rephrases. Falls back gracefully.
+    enhanced = llm_service.enhance_diagnosis(
+        result, request.language or "en-IN", request.message or ""
+    )
+    result["natural_response"] = enhanced.get("response") if enhanced.get("response_source", "").startswith("gemini") else None
+    result["response_source"] = enhanced.get("response_source", "rule-based")
 
     return result
 

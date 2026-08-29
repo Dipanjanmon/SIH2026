@@ -1,6 +1,8 @@
-import { Shield, Bell, Sun, Moon, Circle, Activity, CheckCircle2, Wifi, LogOut } from 'lucide-react';
+import { Shield, Bell, Sun, Moon, Circle, Activity, CheckCircle2, Wifi, LogOut, Languages } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { LANGUAGE_OPTIONS } from '../../i18n/translations';
 
 const ROLE_DISPLAY: Record<string, { label: string; initials: string; avatarBg: string }> = {
   ADMIN: { label: 'System Administrator', initials: 'SA', avatarBg: 'bg-slate-600 border-slate-300' },
@@ -14,6 +16,7 @@ const ROLE_DISPLAY: Record<string, { label: string; initials: string; avatarBg: 
 export default function GovHeader() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { lang, setLang } = useLanguage();
 
   const roleKey = user?.role || 'ADMIN';
   const roleInfo = ROLE_DISPLAY[roleKey] || ROLE_DISPLAY.ADMIN;
@@ -40,6 +43,22 @@ export default function GovHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Language selector */}
+          <div className="flex items-center gap-1 text-slate-400" title="Language">
+            <Languages className="w-4 h-4" />
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value as typeof lang)}
+              className="bg-transparent text-[11px] font-medium text-slate-200 focus:outline-none cursor-pointer"
+            >
+              {LANGUAGE_OPTIONS.map((o) => (
+                <option key={o.code} value={o.code} className="text-gray-900">
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
             onClick={toggleTheme}
             className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors"

@@ -170,7 +170,8 @@ export default function GovDashboard() {
   const isDark = theme === 'dark';
 
   const [activeTab, setActiveTab] = useState<GovTab>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  // Default the command-center sidebar open on desktop, collapsed on phones (<1024px).
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => window.innerWidth >= 1024);
   const [stateFilter, setStateFilter] = useState<string>('ALL');
   const [diseaseFilter, setDiseaseFilter] = useState<string>('ALL');
   const [, setTimeframe] = useState<string>('Last 30 Days');

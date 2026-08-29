@@ -1,5 +1,7 @@
-.env
+.venv/
 __pycache__/
 *.pyc
-.git/
-.vscode/
+datasets/
+.env
+_*.json
+# NOTE: models/*.pth is intentionally NOT ignored — the CNN needs it at runtime.

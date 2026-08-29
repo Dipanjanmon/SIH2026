@@ -150,3 +150,39 @@ npm run dev
 ```
 
 **Open:** http://localhost:5173
+
+
+---
+
+## Phase 5 — Gemini LLM, i18n, Docker, mobile, demo (COMPLETE)
+
+**LLM (multi-key failover):** `ai-service/llm_service.py` wraps rule-based diagnosis in
+natural language via Gemini Flash. Up to 5 keys (`GEMINI_API_KEY`, `_2.._5`, or
+`GEMINI_API_KEYS` comma-bundle); on 429/403 it cools a key down 60s and fails over.
+LLM ONLY rephrases rule-based facts — never invents medical data. Works fully with **no
+key** (rule-based fallback). Wired into `/api/v1/chat/advisory` + `/api/v1/diagnose/complete`;
+`language` field added; `GET /api/v1/llm/status`; version 2.2.0.
+
+**i18n:** `frontend/src/i18n/translations.ts` (en/hi/mr) + `context/LanguageContext.tsx`
+(`useLanguage`, `t()`, persists to localStorage). Language selector lives in **GovHeader**
+(the header that actually renders). AiFloatingChat passes `language` to the API and shows
+`natural_response` when the LLM is active.
+
+**Docker one-command deploy:** `docker compose up --build` → 4 services
+(postgis 16-3.4, ai, backend, frontend nginx) with health checks + ordered startup.
+Creds fixed to admin/password, db `pashuraksha`. Backend→AI via `AI_SERVICE_URL=http://ai:5000`,
+frontend nginx proxies `/api/` → `backend:8080`. AI Docker image adds torch/torchvision
+CPU wheels (needed by image_detector). Deleted the old fragile monolithic all-in-one Dockerfile.
+
+**Mobile + errors:** GovDashboard sidebar defaults collapsed on phones; AiFloatingChat panel
+is full-screen on mobile. ReportDiseasePage now uses `apiClient` (was hardcoded localhost:8080)
+and surfaces submit/detect errors instead of silently swallowing them. Removed dead
+`Layout.tsx` + `Sidebar.tsx` (never imported).
+
+## How to Run (updated — one command)
+```bash
+docker compose up --build   # open http://localhost
+# optional LLM: set GEMINI_API_KEY before the command
+```
+Demo credentials use **username** (not email): admin/admin123, govt1/govt123, vet1/vet123,
+farmer1/farmer123, lab1/lab123. Full 9-step demo script is in README.md.

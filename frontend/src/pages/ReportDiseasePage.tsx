@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import apiClient from '../api/client';
 
 const SYMPTOM_OPTIONS = [
   'Fever', 'Cough', 'Diarrhea', 'Loss of appetite', 'Nasal discharge',
@@ -24,6 +25,8 @@ export default function ReportDiseasePage() {
   const [success, setSuccess] = useState(false);
   const [aiDetection, setAiDetection] = useState<{prediction: string; confidence: number; recommendations: string[]; description?: string} | null>(null);
   const [detecting, setDetecting] = useState(false);
+  const [detectError, setDetectError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const toggleSymptom = (symptom: string) => {
     setForm(prev => ({
@@ -40,16 +43,14 @@ export default function ReportDiseasePage() {
     if (!file) return;
 
     setDetecting(true);
+    setDetectError(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8080/api/v1/detect/image', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+      const res = await apiClient.post('/detect/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const data = await res.json();
+      const data = res.data;
       setAiDetection(data);
       // Auto-suggest severity from AI prediction
       if (data.prediction && data.prediction !== 'Healthy') {
@@ -58,7 +59,8 @@ export default function ReportDiseasePage() {
         else if (conf >= 0.6) setForm(prev => ({ ...prev, severity: 'MEDIUM' }));
       }
     } catch {
-      // silently fail — detection is optional
+      // Detection is optional, but tell the user it didn't run so they don't wait on it.
+      setDetectError('Image analysis unavailable. You can still submit the report manually.');
     } finally {
       setDetecting(false);
     }
@@ -81,16 +83,16 @@ export default function ReportDiseasePage() {
     formData.append('district', form.district);
     if (photo) formData.append('photo', photo);
 
+    setSubmitError(null);
     try {
-      await fetch('http://localhost:8080/api/v1/cases', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: formData,
+      await apiClient.post('/cases', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch {
-      // Handle error silently
+      // Never claim success on failure — a farmer must know the report didn't file.
+      setSubmitError('Could not submit the report. Check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -103,6 +105,18 @@ export default function ReportDiseasePage() {
       {success && (
         <div className="rounded-lg bg-green-50 p-4 text-green-800">
           Disease case reported successfully!
+        </div>
+      )}
+
+      {submitError && (
+        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
+          {submitError}
+        </div>
+      )}
+
+      {detectError && (
+        <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+          {detectError}
         </div>
       )}
 

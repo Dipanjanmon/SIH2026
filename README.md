@@ -1,104 +1,173 @@
 # PashuRaksha 🐄🏥
 
-**SIH 2026 Prototype**  
-**Problem Statement Code:** SIH26128  
-**Title:** Intelligent Livestock Disease Surveillance & Early-Warning Web Platform  
-
-## 📖 Overview
-PashuRaksha is a web-based livestock-health surveillance and decision-support platform designed for the Department of Animal Husbandry and Dairying (AHD). 
-
-The platform collects real-time livestock health reports from farmers and veterinary personnel. It passes this data through a Python-based intelligent risk engine to calculate severity, and employs unsupervised machine learning (DBSCAN) to dynamically identify emerging geographic outbreaks. High-risk clusters automatically trigger alerts to veterinary block officers, enabling rapid, data-driven deployment of resources before localized infections become epidemics.
-
-## 🏗️ Architecture & Tech Stack
-The platform is built as a distributed microservices-oriented architecture:
-
-* **Frontend (User & Gov Interfaces):** React 18, Vite, Tailwind CSS, Lucide React, React-Leaflet (GIS Mapping), Recharts.
-* **Backend Core (Business Logic & Auth):** Java 21, Spring Boot 3, Spring Security (JWT Stateless Auth), Spring Data JPA.
-* **Intelligence Service (AI/ML Math):** Python, FastAPI, Scikit-Learn (DBSCAN Clustering with Haversine distance), Pandas.
-* **Database & GIS:** PostgreSQL 15 + PostGIS extension, managed via Docker.
+**SIH 2026 Prototype** · **Problem Statement:** SIH26128
+**Intelligent Livestock Disease Surveillance & Early-Warning Web Platform**
+For the Department of Animal Husbandry & Dairying (AHD), Govt. of India.
 
 ---
 
-## 🚀 Core Features & Workflows
+## 📖 What it does
 
-### 1. Multi-Tier Secure Authentication
-* **Public Portal (`/login`):** For Farmers and Veterinarians to access their respective dashboards.
-* **Hidden AHD Secure Node:** For government officials (Admins). The route is intentionally obfuscated (`/auth/department-of-ahd-login`) to prevent brute-force and unprivileged discovery.
+PashuRaksha turns every farmer's phone into a disease-surveillance sensor. A farmer
+describes symptoms (by voice, in their own language) or uploads a photo of a sick
+animal. The system:
 
-### 2. Intelligent Risk Engine
-When a farmer reports a case (e.g., Fever, Mouth Blisters), the Spring Boot backend delegates the risk calculation to the Python Intelligence Service. The Python engine calculates a risk score and risk level (e.g., `CRITICAL`, `WARNING`) based on historical mortality and symptom duration.
+1. **Identifies the disease** — a CNN image classifier (MobileNetV2, ~90% val accuracy)
+   and a rule-based symptom engine, fused for a single confident diagnosis.
+2. **Gives an actionable plan** — first aid, drugs & dosage, recovery timeline, cost.
+3. **Adds outbreak intelligence** — nearby cases, vaccination coverage, weather risk,
+   herd-risk assessment for the farmer's own animals.
+4. **Explains it naturally** — an optional Gemini Flash LLM rephrases the rule-based
+   facts into warm, plain language in the farmer's tongue (falls back to structured
+   text if no key / offline).
+5. **Feeds government surveillance** — reports flow into a DBSCAN spatial-clustering
+   engine that flags emerging outbreak clusters and auto-alerts block veterinary officers.
 
-### 3. Spatial Clustering & Outbreak Detection
-The system continually polls active disease cases. The Python ML engine utilizes **DBSCAN** clustering on the GIS coordinates (Latitude/Longitude) to detect spatial density. If an outbreak epicenter is found, a `Cluster` is formed.
-
-### 4. Event-Driven Alert System
-Detected clusters and high-risk individual cases automatically trigger actionable alerts. These alerts are dispatched to the State Dashboard and local Veterinarian dashboards for immediate triage.
-
-### 5. Veterinary & Laboratory Triage
-Vets can claim reported cases, dispatch them to labs by assigning a `LabSample`, and log the test results, updating the global state of the outbreak.
-
-### 6. Government Surveillance Dashboard
-An institutional, data-dense map and chart view replacing generic UI. Government officials can view geographic cluster distributions on interactive Leaflet maps and track epidemiological curves.
+This is **surveillance and epidemic-prevention infrastructure**, not a vet-consultation
+app — the value is the early-warning network built from farmer reports.
 
 ---
 
-## 🛠️ Installation & Execution
+## 🏗️ Architecture
 
-### Prerequisites
-* Docker & Docker Compose
-* Java 21 (JDK) & Maven
-* Python 3.10+
-* Node.js 20+
+Four services, wired front-to-back:
 
-### 1. Database (Docker)
-```bash
-docker-compose up -d
 ```
-*This starts PostGIS on port 5432 and pgAdmin on port 5050.*
+Browser ──▶ Frontend (nginx :80) ──/api/v1──▶ Backend (Spring :8080) ──▶ AI service (FastAPI :5000)
+                                                      │                          │
+                                                      └──▶ PostgreSQL+PostGIS :5432 (CNN + LLM + DBSCAN)
+```
 
-### 2. Intelligence Service (Python)
+* **Frontend:** React 18, Vite, Tailwind, Lucide, React-Leaflet, Recharts. PWA + offline sync.
+  9-language voice (Web Speech STT/TTS), one-tap GPS capture, floating AI chat.
+* **Backend:** Java 21, Spring Boot 3, Spring Security (JWT). Proxies AI endpoints,
+  owns cases/alerts/vaccinations, seeds demo data on first run.
+* **AI service:** Python, FastAPI. CNN image detector (PyTorch), rule-based symptom
+  engine, treatment protocols, outbreak intelligence, DBSCAN clustering, Gemini Flash LLM
+  (multi-key failover, optional).
+* **Database:** PostgreSQL 16 + PostGIS.
+
+---
+
+## 🚀 One-command deploy (recommended)
+
 ```bash
-cd intelligence-service
-python -m venv venv
-venv\Scripts\activate  # Windows
+docker compose up --build
+```
+
+That builds and starts all four services in the right order (DB → AI → backend → frontend),
+with health checks. Open **http://localhost**.
+
+* Frontend: http://localhost (port 80)
+* Backend API: http://localhost:8080
+* AI service: http://localhost:5000 (health at `/health`)
+
+First build takes a few minutes (PyTorch CPU wheels, Maven deps, npm build).
+
+### Optional: enable the LLM
+
+The system runs fully without any API key (rule-based responses). To turn on natural-language
+Gemini Flash responses, set keys before `docker compose up` (multi-key failover supported):
+
+```bash
+# PowerShell
+$env:GEMINI_API_KEY="your-key"; docker compose up --build
+```
+
+Get free keys at https://aistudio.google.com/apikey. See `ai-service/.env.example`.
+
+---
+
+## 🛠️ Local development (without Docker)
+
+Prerequisites: Java 21 + Maven, Python 3.10+, Node 20+, a PostGIS database.
+
+```bash
+# 1. Database (PostGIS on :5432, user admin / pass password / db pashuraksha)
+docker run -d --name pashuraksha_db -p 5432:5432 \
+  -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=password -e POSTGRES_DB=pashuraksha \
+  postgis/postgis:16-3.4
+
+# 2. AI service (:5000)
+cd ai-service
+python -m venv .venv && .venv\Scripts\activate   # Windows
 pip install -r requirements.txt
-python main.py
-```
-*Runs on port 8000.*
+# torch/torchvision are needed for the image detector — install separately if not present
+python -m uvicorn main:app --host 0.0.0.0 --port 5000
 
-### 3. Backend Core (Java Spring Boot)
-```bash
+# 3. Backend (:8080)
 cd backend
-./mvnw clean install
 ./mvnw spring-boot:run
-```
-*Runs on port 8080. On the first run, the `DatabaseSeeder` will automatically populate dummy Farms, Farmers, and FMD Outbreaks.*
+#   or: java -jar target/pashuraksha-api-1.0.0-SNAPSHOT.jar \
+#         --spring.datasource.url=jdbc:postgresql://localhost:5432/pashuraksha \
+#         --spring.datasource.username=admin --spring.datasource.password=password
 
-### 4. Frontend (React/Vite)
-```bash
+# 4. Frontend (:5173)
 cd frontend
-npm install
-npm run dev
+npm install && npm run dev
 ```
-*Runs on port 5173.*
+
+The backend seeds demo users/farms/cases automatically on first run.
 
 ---
 
-## 🧪 Demo Credentials (Seeded)
+## 🧪 Demo credentials (seeded)
 
-The database automatically seeds the following accounts:
+Login uses **username** (not email). All accounts below are auto-seeded.
 
-1. **Government Official (State Director):**
-   * **URL:** `http://localhost:5173/auth/department-of-ahd-login`
-   * **Email:** `director.ahd@pashuraksha.gov`
-   * **Password:** `password`
+| Role              | Username  | Password    |
+| ----------------- | --------- | ----------- |
+| Admin             | `admin`   | `admin123`  |
+| Government Officer| `govt1`   | `govt123`   |
+| Veterinarian      | `vet1`    | `vet123`    |
+| Field Officer     | `field1`  | `field123`  |
+| Farmer            | `farmer1` | `farmer123` |
+| Lab Technician    | `lab1`    | `lab123`    |
 
-2. **Farmer:**
-   * **URL:** `http://localhost:5173/login`
-   * **Email:** `farmer@pashuraksha.local`
-   * **Password:** `password`
+---
 
-3. **Veterinarian:**
-   * **URL:** `http://localhost:5173/login`
-   * **Email:** `vet@pashuraksha.gov`
-   * **Password:** `password`
+## 🎬 Demo script (9 steps)
+
+A tight walkthrough that shows the full loop. Run `docker compose up --build`, open
+http://localhost, then:
+
+1. **Log in as `farmer1` / `farmer123`.** Land on the surveillance dashboard.
+2. **Open the floating AI chat** (bottom-right button). Pick a language from the header
+   selector (e.g. Hindi) — the UI and voice switch language.
+3. **Speak or type a symptom** — e.g. "cow has fever, blisters in mouth, drooling."
+   Use the mic button for voice-to-text.
+4. **Tap "Capture Location"** — one-tap GPS grabs coordinates (no typing).
+5. **See the diagnosis:** Foot and Mouth Disease with a confidence score and risk badge.
+   If an LLM key is set, the reply leads with a natural-language summary in the chosen language.
+6. **Expand the cards:** First Aid & Treatment (drugs + dosage), Severity Timeline,
+   Area Intelligence (nearby cases, vaccination coverage, weather risk, herd risk).
+7. **Upload a photo instead** — the CNN classifies the image and fuses it with symptoms
+   for a combined, higher-confidence diagnosis.
+8. **Tap "File Disease Report"** — the case enters the system, triggering risk scoring
+   and (if a cluster forms) an automatic alert.
+9. **Log in as `govt1` / `govt123`** — view the case on the GIS map, watch the
+   epidemiological curve, and see the outbreak cluster + alert that the report generated.
+
+**Read-aloud:** any AI response can be played back with the "Read Aloud 🔊" button
+(text-to-speech in the selected language) — built for low-literacy farmers.
+
+---
+
+## ✅ Verify it's running
+
+```bash
+curl http://localhost:5000/health          # AI service + LLM status
+curl http://localhost:8080/api/v1/...       # backend (JWT-protected)
+# Full chain (login → diagnosis) is exercised by the demo script above.
+```
+
+---
+
+## 📚 Deeper docs
+
+See the `docs/` folder:
+* `01_PROBLEM_AND_VISION.md` — the problem and why this approach
+* `02_WHAT_IS_BUILT.md` — current capabilities
+* `03_WHAT_NEEDS_BUILDING.md` — roadmap
+* `04_HOW_MASS_ADOPTION_WORKS.md` — go-to-market for scale
+* `05_FOLDER_STRUCTURE.md` — repository layout

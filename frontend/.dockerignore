@@ -1,6 +1,5 @@
 node_modules/
 dist/
-.git/
-.vscode/
-*.log
-*.md
+test-results/
+playwright-report/
+.playwright/

@@ -1,0 +1,15 @@
+# AI service dependencies for Docker (CPU-only torch — no CUDA, keeps image small).
+# The dev .venv uses the CUDA build for the RTX 3050; containers run CPU inference.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+fastapi==0.115.0
+uvicorn==0.30.0
+pydantic==2.9.0
+numpy
+pandas
+requests==2.32.0
+python-dotenv==1.0.1
+python-multipart==0.0.9
+Pillow==10.4.0
+torch==2.4.1
+torchvision==0.19.1

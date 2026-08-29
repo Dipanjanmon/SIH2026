@@ -27,6 +27,8 @@ interface CompleteResponse {
   identified_disease?: string;
   confidence?: number;
   risk_level?: string;
+  natural_response?: string | null;
+  response_source?: string;
   diagnosis?: {
     probable_disease: string;
     confidence: number;
@@ -189,7 +191,7 @@ export default function AiFloatingChat() {
 
     try {
       const payload: Record<string, any> = {
-        message: msg, animal_type: animalType, district, farm_animal_count: 12,
+        message: msg, animal_type: animalType, district, farm_animal_count: 12, language: selectedLang,
       };
       if (gpsLocation) { payload.latitude = gpsLocation.lat; payload.longitude = gpsLocation.lng; }
       const res = await apiClient.post('/diagnose/complete', payload);
@@ -198,7 +200,7 @@ export default function AiFloatingChat() {
       addMessage({ id: (Date.now() + 1).toString(), role: 'ai', text: responseText, data, timestamp: new Date() });
     } catch {
       try {
-        const res = await apiClient.post('/chat/advisory', { message: msg, animal_type: animalType });
+        const res = await apiClient.post('/chat/advisory', { message: msg, animal_type: animalType, language: selectedLang });
         addMessage({ id: (Date.now() + 1).toString(), role: 'ai', text: res.data.response || 'Could not analyze.', data: res.data, timestamp: new Date() });
       } catch {
         addMessage({ id: (Date.now() + 1).toString(), role: 'ai', text: 'Service unavailable. Please try again.', timestamp: new Date() });
@@ -223,7 +225,7 @@ export default function AiFloatingChat() {
 
       const payload: Record<string, any> = {
         image_prediction: imgResult.prediction, image_confidence: imgResult.confidence,
-        animal_type: animalType, district, farm_animal_count: 12,
+        animal_type: animalType, district, farm_animal_count: 12, language: selectedLang,
       };
       if (gpsLocation) { payload.latitude = gpsLocation.lat; payload.longitude = gpsLocation.lng; }
       const completeRes = await apiClient.post('/diagnose/complete', payload);
@@ -243,7 +245,9 @@ export default function AiFloatingChat() {
     const conf = Math.round((data.confidence || 0) * 100);
     const risk = data.risk_level || 'UNKNOWN';
     const emergency = data.diagnosis?.is_emergency ? '🚨 EMERGENCY\n' : '';
-    let text = `${emergency}🔬 **${d}** (${conf}%, ${risk} risk)\n`;
+    // If the LLM produced a natural-language summary in the farmer's language, lead with it.
+    const natural = data.natural_response ? `${data.natural_response}\n\n─────────\n` : '';
+    let text = `${natural}${emergency}🔬 **${d}** (${conf}%, ${risk} risk)\n`;
     if (data.intelligence?.outbreak_status) text += `\n${data.intelligence.outbreak_status.message}\n`;
     if (data.intelligence?.herd_risk && data.intelligence.herd_risk.risk_level !== 'LOW') text += `\n🐄 ${data.intelligence.herd_risk.message}\n`;
     if (data.treatment?.available) text += `\n⏱️ Recovery: ${data.treatment.recovery_time} | 💀 Mortality: ${data.treatment.mortality_rate}\n💰 Est. cost: ${data.treatment.estimated_cost.per_animal}`;
@@ -262,7 +266,7 @@ export default function AiFloatingChat() {
 
       {/* Chat Panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col w-[400px] h-[640px] rounded-2xl border border-gray-200 bg-white shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex flex-col bg-white overflow-hidden sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px] sm:h-[640px] sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5">
             <div className="flex items-center gap-2">
