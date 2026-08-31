@@ -262,7 +262,16 @@ export default function AiFloatingChat() {
       const imgResult = imgRes.data;
 
       // If the CNN was uncertain, the AI service attaches a Gemini vision read that
-      // can identify ANY animal (buffalo/sheep/pig/etc). Show it to the farmer.
+      // can identify ANY livestock animal (buffalo/sheep/pig/etc). Non-livestock
+      // images are rejected — show the refusal and stop (no diagnosis on junk images).
+      if (imgResult.vision && imgResult.vision.rejected) {
+        addMessage({
+          id: (Date.now() + 0.5).toString(), role: 'ai',
+          text: `⚠️ ${imgResult.vision.advice}`,
+          timestamp: new Date(),
+        });
+        return; // don't run the disease diagnosis on a non-animal image
+      }
       if (imgResult.vision && imgResult.vision.advice) {
         const v = imgResult.vision;
         addMessage({

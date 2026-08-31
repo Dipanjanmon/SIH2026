@@ -144,17 +144,25 @@ async def detect_image(file: UploadFile = File(...), language: str = "en-IN"):
     result["filename"] = file.filename
     result["file_size_kb"] = round(len(image_bytes) / 1024, 1)
 
-    # Gemini vision catch-all: when the CNN is uncertain (low confidence), ask the
-    # multimodal LLM to look at the actual photo. This covers animals/diseases the
-    # CNN was never trained on (buffalo, sheep, pig, etc.). Falls back silently if
-    # no key. The CNN result stays; we add a 'vision' block alongside it.
-    if (result.get("confidence") or 0) < 0.70:
+    # Gemini vision serves two jobs: (1) catch-all for animals the CNN wasn't trained
+    # on (buffalo/sheep/pig), and (2) SCOPE GATE that rejects non-livestock images
+    # (car, person, food) — the CNN alone can't reject those since it only outputs
+    # its 10 trained classes. We trigger it unless the CNN is very confident (>=0.85),
+    # so most uploads get scope-checked while confident animal hits skip the LLM call.
+    # ponytail: ceiling — a non-animal that the CNN mislabels with >=0.85 confidence
+    # would slip past the gate (rare, since non-animals score low). Upgrade path: run
+    # a lightweight animal/not-animal check on every image, or a binary gate head.
+    if (result.get("confidence") or 0) < 0.85:
         mime = file.content_type if (file.content_type or "").startswith("image/") else "image/jpeg"
         cnn_hint = f"{result.get('prediction','')} ({int((result.get('confidence') or 0)*100)}pct)"
         vision = llm_service.analyze_image(image_bytes, mime_type=mime,
                                            language=language, cnn_hint=cnn_hint)
         if vision:
             result["vision"] = vision
+            # If Gemini says it's not a farm animal, propagate the rejection to the top
+            # level so the backend/frontend can block the diagnosis cleanly.
+            if vision.get("rejected"):
+                result["rejected"] = True
     return result
 
 

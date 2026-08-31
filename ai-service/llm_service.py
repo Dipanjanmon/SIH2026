@@ -51,6 +51,18 @@ LANGUAGE_NAMES = {
     "te": "Telugu", "ta": "Tamil", "gu": "Gujarati", "en": "English",
 }
 
+# Shown when an uploaded image is not a livestock animal. Keeps the tool on-scope.
+LIVESTOCK_REFUSAL = {
+    "en-IN": "This does not look like a farm animal. Please upload a clear photo of your cattle, buffalo, goat, sheep, or poultry.",
+    "hi-IN": "यह किसी पशु की तस्वीर नहीं लगती। कृपया अपनी गाय, भैंस, बकरी, भेड़ या मुर्गी की साफ़ तस्वीर भेजें।",
+    "mr-IN": "ही पशुची छायाचित्र वाटत नाही. कृपया तुमची गाय, म्हैस, शेळी, मेंढी किंवा कोंबडीचे स्पष्ट छायाचित्र पाठवा.",
+    "bn-IN": "এটি খামারের পশুর ছবি বলে মনে হচ্ছে না। অনুগ্রহ করে আপনার গরু, মহিষ, ছাগল, ভেড়া বা মুরগির স্পষ্ট ছবি দিন।",
+    "pa-IN": "ਇਹ ਪਸ਼ੂ ਦੀ ਤਸਵੀਰ ਨਹੀਂ ਲੱਗਦੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੀ ਗਾਂ, ਮੱਝ, ਬੱਕਰੀ, ਭੇਡ ਜਾਂ ਮੁਰਗੀ ਦੀ ਸਾਫ਼ ਤਸਵੀਰ ਭੇਜੋ।",
+    "te-IN": "ఇది పశువు చిత్రంలా లేదు. దయచేసి మీ ఆవు, గేదె, మేక, గొర్రె లేదా కోడి స్పష్టమైన ఫోటో పంపండి.",
+    "ta-IN": "இது கால்நடையின் படமாகத் தெரியவில்லை. உங்கள் மாடு, எருமை, ஆடு, செம்மறி அல்லது கோழியின் தெளிவான படத்தை அனுப்பவும்.",
+    "gu-IN": "આ પશુની તસવીર જણાતી નથી. કૃપા કરીને તમારી ગાય, ભેંસ, બકરી, ઘેટાં કે મરઘીની સ્પષ્ટ તસવીર મોકલો.",
+}
+
 
 class LLMService:
     def __init__(self):
@@ -136,18 +148,26 @@ class LLMService:
         symp = f"The farmer also describes: {symptoms}. " if symptoms else ""
 
         # Ask for a compact, parseable answer AND farmer-friendly advice in one shot.
+        # First gate: is this actually a farm/livestock animal? Refuse everything else.
+        refusal = LIVESTOCK_REFUSAL.get(language, LIVESTOCK_REFUSAL["en-IN"])
         instruction = (
-            "You are PashuRaksha AI, a veterinary assistant for Indian farmers. "
-            "Look at this animal photo and assess its health. "
+            "You are PashuRaksha AI, a LIVESTOCK health assistant for Indian farmers. "
+            "You ONLY help with farm/livestock animals: cattle, buffalo, goat, sheep, "
+            "poultry/chicken, and pig. "
+            "First, decide if the image clearly shows one of these livestock animals. "
             f"{hint}{symp}"
             "Treat the local model's guess as a hint only — trust what you actually see. "
             "Respond in STRICT JSON with these keys and nothing else:\n"
-            '{"animal": "<cattle|buffalo|goat|sheep|poultry|pig|other>", '
+            '{"is_farm_animal": <true|false>, '
+            '"animal": "<cattle|buffalo|goat|sheep|poultry|pig|other>", '
             '"disease": "<most likely disease or \'appears healthy\'>", '
             '"is_healthy": <true|false>, '
             '"confidence": "<high|medium|low>", '
-            f'"advice": "<2-3 short sentences of first-aid + when to call a vet, written in {lang_name}>"}}\n'
-            "If the image is not an animal, set animal to 'other' and say so in advice. "
+            f'"advice": "<2-3 short sentences of first-aid + when to call a vet, in {lang_name}>"}}\n'
+            "RULES: If the image is NOT a livestock animal (e.g. a person, pet dog/cat, "
+            "car, food, plant, scenery, screenshot, or anything else), set "
+            'is_farm_animal=false, animal="other", and set advice to EXACTLY this text: '
+            f'"{refusal}". Do NOT describe or analyze non-livestock images. '
             "Do NOT invent specific drug dosages — keep advice to first aid and vet referral."
         )
 
@@ -160,12 +180,17 @@ class LLMService:
         if not raw:
             return None
 
-        return self._parse_vision_json(raw)
+        return self._parse_vision_json(raw, language)
 
-    @staticmethod
-    def _parse_vision_json(raw: str) -> Dict:
+    # Livestock species we accept. Anything else is out of scope.
+    _LIVESTOCK = {"cattle", "buffalo", "goat", "sheep", "poultry", "chicken", "pig"}
+
+    @classmethod
+    def _parse_vision_json(cls, raw: str, language: str = "en-IN") -> Dict:
         """Extract the JSON object from the model's reply (it sometimes wraps it in
-        ```json fences or prose). Falls back to putting the whole text in advice."""
+        ```json fences or prose). Enforces the livestock-only gate in code so a
+        non-farm-animal image is rejected even if the model's wording drifts."""
+        refusal = LIVESTOCK_REFUSAL.get(language, LIVESTOCK_REFUSAL["en-IN"])
         text = raw.strip()
         # Strip code fences if present
         if "```" in text:
@@ -176,16 +201,24 @@ class LLMService:
         # Grab the first {...} block
         start, end = text.find("{"), text.rfind("}")
         if start != -1 and end != -1 and end > start:
-            candidate = text[start:end + 1]
             try:
-                data = json.loads(candidate)
+                data = json.loads(text[start:end + 1])
                 data["raw"] = raw
+                # Code-level gate: reject if the model flagged non-farm-animal OR the
+                # animal isn't in our livestock set. Don't trust prompt-only refusal.
+                animal = str(data.get("animal", "")).lower()
+                is_farm = data.get("is_farm_animal")
+                if is_farm is False or (animal not in cls._LIVESTOCK):
+                    return {"rejected": True, "is_farm_animal": False, "animal": "other",
+                            "disease": None, "is_healthy": None, "confidence": "low",
+                            "advice": refusal, "raw": raw}
                 return data
             except Exception:
                 pass
-        # Couldn't parse — return the prose as advice so the farmer still gets help.
-        return {"animal": "unknown", "disease": "unknown", "is_healthy": None,
-                "confidence": "low", "advice": raw, "raw": raw}
+        # Couldn't parse the model's JSON — be safe and reject rather than show noise.
+        return {"rejected": True, "is_farm_animal": None, "animal": "unknown",
+                "disease": None, "is_healthy": None, "confidence": "low",
+                "advice": refusal, "raw": raw}
 
     def _build_prompt(self, r: Dict, language: str, user_message: str) -> str:
         lang_name = LANGUAGE_NAMES.get(language, "Hindi")
