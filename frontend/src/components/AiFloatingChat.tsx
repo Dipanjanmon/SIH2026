@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, Camera, FileText, CheckCircle, Mic, MicOff, Shield, Pill, Clock, Users, MapPin, Activity, Volume2, Navigation } from 'lucide-react';
 import apiClient from '../api/client';
+import { useLanguage } from '../context/LanguageContext';
+import type { Lang } from '../i18n/translations';
+
+// Map the chat's full voice-locale codes (needed by Web Speech API) to/from the
+// global UI language (short codes). Keeps the header selector and chat in sync.
+const FULL_TO_SHORT: Record<string, Lang> = {
+  'hi-IN': 'hi', 'mr-IN': 'mr', 'en-IN': 'en',
+};
+const SHORT_TO_FULL: Record<Lang, string> = { hi: 'hi-IN', mr: 'mr-IN', en: 'en-IN' };
 
 // --- Language Configuration ---
 const LANGUAGES = [
@@ -71,11 +80,12 @@ const QUICK_PROMPTS = [
 ];
 
 export default function AiFloatingChat() {
+  const { lang, setLang } = useLanguage();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '0', role: 'ai',
-      text: "Namaste! 🙏 I'm PashuRaksha AI — your livestock health assistant.\n\n🔬 Describe symptoms or upload a photo\n💊 I'll give you disease + treatment + drugs\n📊 Area outbreak status + herd risk\n🎤 Speak in your language (Hindi, Marathi, Bengali...)\n📍 Auto GPS location capture\n\nWhat's happening with your animal?",
+      text: "Namaste! 🙏 I'm PashuRaksha AI — your livestock health assistant.\n\n🔬 Describe symptoms or upload a photo\n🐄🐐🐔 Cattle, goat & poultry image detection + AI vision for any animal\n💊 Disease + treatment + drugs\n📊 Area outbreak status + herd risk\n🎤 Speak in your language\n📍 Auto GPS location capture\n\nWhat's happening with your animal?",
       timestamp: new Date(),
     },
   ]);
@@ -85,7 +95,22 @@ export default function AiFloatingChat() {
   const [district, setDistrict] = useState('Palghar');
   const [showDetails, setShowDetails] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('hi-IN');
+  // Chat voice/response language, initialized from the global UI language.
+  const [selectedLang, setSelectedLang] = useState<string>(SHORT_TO_FULL[lang] || 'hi-IN');
+
+  // Keep chat language in sync when the global header language changes.
+  useEffect(() => {
+    const full = SHORT_TO_FULL[lang];
+    if (full && full !== selectedLang) setSelectedLang(full);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
+
+  // When the chat language changes to one the global UI supports, update global too.
+  const changeChatLang = (full: string) => {
+    setSelectedLang(full);
+    const short = FULL_TO_SHORT[full];
+    if (short) setLang(short);
+  };
   const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
@@ -97,10 +122,12 @@ export default function AiFloatingChat() {
 
   const addMessage = (msg: ChatMessage) => setMessages(prev => [...prev, msg]);
 
-  // --- GPS Auto-Capture ---
-  const captureGPS = () => {
+  // --- GPS Capture ---
+  // auto=true is the silent on-open attempt (no chat spam, no alert if denied);
+  // auto=false is the manual button tap (gives the farmer feedback either way).
+  const captureGPS = (auto = false) => {
     if (!navigator.geolocation) {
-      alert('GPS not supported on this device');
+      if (!auto) alert('GPS not supported on this device');
       return;
     }
     setGpsLoading(true);
@@ -108,23 +135,33 @@ export default function AiFloatingChat() {
       (pos) => {
         setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGpsLoading(false);
-        addMessage({
-          id: Date.now().toString(), role: 'ai',
-          text: `📍 Location captured: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}\n\nThis will be used to check nearby cases and outbreaks in your area.`,
-          timestamp: new Date(),
-        });
+        if (!auto) {
+          addMessage({
+            id: Date.now().toString(), role: 'ai',
+            text: `📍 Location captured: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}\n\nThis will be used to check nearby cases and outbreaks in your area.`,
+            timestamp: new Date(),
+          });
+        }
       },
       () => {
         setGpsLoading(false);
-        addMessage({
-          id: Date.now().toString(), role: 'ai',
-          text: `📍 Could not get GPS. Please allow location access or type your village/district name.`,
-          timestamp: new Date(),
-        });
+        if (!auto) {
+          addMessage({
+            id: Date.now().toString(), role: 'ai',
+            text: `📍 Could not get GPS. Please allow location access or type your village/district name.`,
+            timestamp: new Date(),
+          });
+        }
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
+
+  // Auto-capture GPS the first time the chat panel opens (no tap needed).
+  useEffect(() => {
+    if (open && !gpsLocation && !gpsLoading) captureGPS(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // --- Text-to-Speech (Read AI response aloud) ---
   const speakText = (text: string, msgId: string) => {
@@ -220,8 +257,29 @@ export default function AiFloatingChat() {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('language', selectedLang);
       const imgRes = await apiClient.post('/detect/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       const imgResult = imgRes.data;
+
+      // If the CNN was uncertain, the AI service attaches a Gemini vision read that
+      // can identify ANY livestock animal (buffalo/sheep/pig/etc). Non-livestock
+      // images are rejected — show the refusal and stop (no diagnosis on junk images).
+      if (imgResult.vision && imgResult.vision.rejected) {
+        addMessage({
+          id: (Date.now() + 0.5).toString(), role: 'ai',
+          text: `⚠️ ${imgResult.vision.advice}`,
+          timestamp: new Date(),
+        });
+        return; // don't run the disease diagnosis on a non-animal image
+      }
+      if (imgResult.vision && imgResult.vision.advice) {
+        const v = imgResult.vision;
+        addMessage({
+          id: (Date.now() + 0.5).toString(), role: 'ai',
+          text: `🔍 AI vision (${v.animal || 'animal'}): ${v.disease || ''}\n\n${v.advice}`,
+          timestamp: new Date(),
+        });
+      }
 
       const payload: Record<string, any> = {
         image_prediction: imgResult.prediction, image_confidence: imgResult.confidence,
@@ -278,7 +336,7 @@ export default function AiFloatingChat() {
             </div>
             <div className="flex items-center gap-1">
               {/* Language Selector */}
-              <select value={selectedLang} onChange={e => setSelectedLang(e.target.value)} className="rounded bg-white/20 px-1 py-0.5 text-[10px] text-white border-0 focus:outline-none" title="Voice language">
+              <select value={selectedLang} onChange={e => changeChatLang(e.target.value)} className="rounded bg-white/20 px-1 py-0.5 text-[10px] text-white border-0 focus:outline-none" title="Voice & response language">
                 {LANGUAGES.map(l => <option key={l.code} value={l.code} className="text-gray-900">{l.name}</option>)}
               </select>
               <select value={animalType} onChange={e => setAnimalType(e.target.value)} className="rounded bg-white/20 px-1 py-0.5 text-[10px] text-white border-0">
@@ -286,6 +344,7 @@ export default function AiFloatingChat() {
                 <option value="buffalo" className="text-gray-900">🐃 Buffalo</option>
                 <option value="goat" className="text-gray-900">🐐 Goat</option>
                 <option value="sheep" className="text-gray-900">🐑 Sheep</option>
+                <option value="poultry" className="text-gray-900">🐔 Poultry</option>
               </select>
               <button onClick={() => setOpen(false)} className="rounded-full p-1 hover:bg-white/20"><X className="h-4 w-4 text-white" /></button>
             </div>
@@ -294,7 +353,7 @@ export default function AiFloatingChat() {
           {/* GPS + District Bar */}
           <div className="flex items-center justify-between bg-gray-100 px-3 py-1.5 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <button onClick={captureGPS} disabled={gpsLoading} className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition ${gpsLocation ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700'}`}>
+              <button onClick={() => captureGPS(false)} disabled={gpsLoading} className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition ${gpsLocation ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700'}`}>
                 <Navigation className={`h-3 w-3 ${gpsLoading ? 'animate-spin' : ''}`} />
                 {gpsLocation ? `📍 ${gpsLocation.lat.toFixed(2)}, ${gpsLocation.lng.toFixed(2)}` : gpsLoading ? 'Getting GPS...' : '📍 Capture Location'}
               </button>

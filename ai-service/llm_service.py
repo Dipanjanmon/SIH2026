@@ -41,7 +41,7 @@ def _load_keys() -> List[str]:
     return keys
 
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 LANGUAGE_NAMES = {
@@ -49,6 +49,18 @@ LANGUAGE_NAMES = {
     "te-IN": "Telugu", "ta-IN": "Tamil", "gu-IN": "Gujarati", "en-IN": "English",
     "hi": "Hindi", "mr": "Marathi", "bn": "Bengali", "pa": "Punjabi",
     "te": "Telugu", "ta": "Tamil", "gu": "Gujarati", "en": "English",
+}
+
+# Shown when an uploaded image is not a livestock animal. Keeps the tool on-scope.
+LIVESTOCK_REFUSAL = {
+    "en-IN": "This does not look like a farm animal. Please upload a clear photo of your cattle, buffalo, goat, sheep, or poultry.",
+    "hi-IN": "यह किसी पशु की तस्वीर नहीं लगती। कृपया अपनी गाय, भैंस, बकरी, भेड़ या मुर्गी की साफ़ तस्वीर भेजें।",
+    "mr-IN": "ही पशुची छायाचित्र वाटत नाही. कृपया तुमची गाय, म्हैस, शेळी, मेंढी किंवा कोंबडीचे स्पष्ट छायाचित्र पाठवा.",
+    "bn-IN": "এটি খামারের পশুর ছবি বলে মনে হচ্ছে না। অনুগ্রহ করে আপনার গরু, মহিষ, ছাগল, ভেড়া বা মুরগির স্পষ্ট ছবি দিন।",
+    "pa-IN": "ਇਹ ਪਸ਼ੂ ਦੀ ਤਸਵੀਰ ਨਹੀਂ ਲੱਗਦੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੀ ਗਾਂ, ਮੱਝ, ਬੱਕਰੀ, ਭੇਡ ਜਾਂ ਮੁਰਗੀ ਦੀ ਸਾਫ਼ ਤਸਵੀਰ ਭੇਜੋ।",
+    "te-IN": "ఇది పశువు చిత్రంలా లేదు. దయచేసి మీ ఆవు, గేదె, మేక, గొర్రె లేదా కోడి స్పష్టమైన ఫోటో పంపండి.",
+    "ta-IN": "இது கால்நடையின் படமாகத் தெரியவில்லை. உங்கள் மாடு, எருமை, ஆடு, செம்மறி அல்லது கோழியின் தெளிவான படத்தை அனுப்பவும்.",
+    "gu-IN": "આ પશુની તસવીર જણાતી નથી. કૃપા કરીને તમારી ગાય, ભેંસ, બકરી, ઘેટાં કે મરઘીની સ્પષ્ટ તસવીર મોકલો.",
 }
 
 
@@ -111,6 +123,135 @@ class LLMService:
         )
         return self._call_with_failover(prompt)
 
+    def analyze_image(self, image_bytes: bytes, mime_type: str = "image/jpeg",
+                      language: str = "hi-IN", cnn_hint: str = "",
+                      symptoms: str = "") -> Optional[Dict]:
+        """
+        Multimodal: send the ACTUAL photo to Gemini (which can see it) along with
+        the local CNN's guess and any described symptoms. Gemini identifies the
+        animal + likely disease + gives advice in the farmer's language.
+
+        This is the catch-all for animals/diseases the CNN was never trained on
+        (buffalo, sheep, pig, specific goat diseases, etc.). Returns None if the
+        LLM is unavailable, so callers fall back to the CNN + rule-based path.
+
+        Returns a dict: {animal, disease, is_healthy, confidence_note, advice, raw}.
+        """
+        if not self.enabled or not self._available_keys() or not image_bytes:
+            return None
+
+        import base64
+        lang_name = LANGUAGE_NAMES.get(language, "Hindi")
+        b64 = base64.b64encode(image_bytes).decode("ascii")
+
+        hint = f"A local image model guessed: {cnn_hint}. " if cnn_hint else ""
+        symp = f"The farmer also describes: {symptoms}. " if symptoms else ""
+
+        # Ask for a compact, parseable answer AND farmer-friendly advice in one shot.
+        # First gate: is this actually a farm/livestock animal? Refuse everything else.
+        refusal = LIVESTOCK_REFUSAL.get(language, LIVESTOCK_REFUSAL["en-IN"])
+        instruction = (
+            "You are PashuRaksha AI, a LIVESTOCK health assistant for Indian farmers. "
+            "You ONLY help with farm/livestock animals: cattle, buffalo, goat, sheep, "
+            "poultry/chicken, and pig. "
+            "First, decide if the image clearly shows one of these livestock animals. "
+            f"{hint}{symp}"
+            "Treat the local model's guess as a hint only — trust what you actually see. "
+            "Respond in STRICT JSON with these keys and nothing else:\n"
+            '{"is_farm_animal": <true|false>, '
+            '"animal": "<cattle|buffalo|goat|sheep|poultry|pig|other>", '
+            '"disease": "<most likely disease or \'appears healthy\'>", '
+            '"is_healthy": <true|false>, '
+            '"confidence": "<high|medium|low>", '
+            f'"advice": "<2-3 short sentences of first-aid + when to call a vet, in {lang_name}>"}}\n'
+            "RULES: If the image is NOT a livestock animal (e.g. a person, pet dog/cat, "
+            "car, food, plant, scenery, screenshot, or anything else), set "
+            'is_farm_animal=false, animal="other", and set advice to EXACTLY this text: '
+            f'"{refusal}". Do NOT describe or analyze non-livestock images. '
+            "Do NOT invent specific drug dosages — keep advice to first aid and vet referral."
+        )
+
+        parts = [
+            {"inline_data": {"mime_type": mime_type, "data": b64}},
+            {"text": instruction},
+        ]
+        # Vision + JSON needs more tokens and a longer read timeout than text rephrasing.
+        raw = self._call_parts(parts, max_tokens=600, read_timeout=25)
+        if not raw:
+            return None
+
+        return self._parse_vision_json(raw, language)
+
+    def livestock_refusal(self, language: str = "en-IN") -> str:
+        """The localized 'please upload a livestock photo' message."""
+        return LIVESTOCK_REFUSAL.get(language, LIVESTOCK_REFUSAL["en-IN"])
+
+    def is_livestock_image(self, image_bytes: bytes, mime_type: str = "image/jpeg") -> bool:
+        """
+        Fast, always-on scope gate: asks Gemini a single yes/no — is this a farm/
+        livestock animal? Tiny prompt + tiny output = quick and cheap, so it can run
+        on EVERY image (closing the high-CNN-confidence ceiling).
+
+        Fails OPEN: if the LLM is unavailable (no key/offline), returns True so the
+        tool still works without the LLM (the CNN-only path stays functional).
+        """
+        if not self.enabled or not self._available_keys() or not image_bytes:
+            return True  # can't check -> don't block
+
+        import base64
+        b64 = base64.b64encode(image_bytes).decode("ascii")
+        parts = [
+            {"inline_data": {"mime_type": mime_type, "data": b64}},
+            {"text": (
+                "Does this image clearly show a farm/livestock animal "
+                "(cattle, buffalo, goat, sheep, chicken/poultry, or pig)? "
+                "Answer with ONLY one word: YES or NO."
+            )},
+        ]
+        # Very small output; short timeout keeps the request snappy.
+        raw = self._call_parts(parts, max_tokens=5, read_timeout=12)
+        if raw is None:
+            return True  # call failed -> fail open
+        return "yes" in raw.strip().lower()
+
+    # Livestock species we accept. Anything else is out of scope.
+    _LIVESTOCK = {"cattle", "buffalo", "goat", "sheep", "poultry", "chicken", "pig"}
+
+    @classmethod
+    def _parse_vision_json(cls, raw: str, language: str = "en-IN") -> Dict:
+        """Extract the JSON object from the model's reply (it sometimes wraps it in
+        ```json fences or prose). Enforces the livestock-only gate in code so a
+        non-farm-animal image is rejected even if the model's wording drifts."""
+        refusal = LIVESTOCK_REFUSAL.get(language, LIVESTOCK_REFUSAL["en-IN"])
+        text = raw.strip()
+        # Strip code fences if present
+        if "```" in text:
+            import re
+            m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+            if m:
+                text = m.group(1)
+        # Grab the first {...} block
+        start, end = text.find("{"), text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            try:
+                data = json.loads(text[start:end + 1])
+                data["raw"] = raw
+                # Code-level gate: reject if the model flagged non-farm-animal OR the
+                # animal isn't in our livestock set. Don't trust prompt-only refusal.
+                animal = str(data.get("animal", "")).lower()
+                is_farm = data.get("is_farm_animal")
+                if is_farm is False or (animal not in cls._LIVESTOCK):
+                    return {"rejected": True, "is_farm_animal": False, "animal": "other",
+                            "disease": None, "is_healthy": None, "confidence": "low",
+                            "advice": refusal, "raw": raw}
+                return data
+            except Exception:
+                pass
+        # Couldn't parse the model's JSON — be safe and reject rather than show noise.
+        return {"rejected": True, "is_farm_animal": None, "animal": "unknown",
+                "disease": None, "is_healthy": None, "confidence": "low",
+                "advice": refusal, "raw": raw}
+
     def _build_prompt(self, r: Dict, language: str, user_message: str) -> str:
         lang_name = LANGUAGE_NAMES.get(language, "Hindi")
         disease = r.get("identified_disease") or r.get("probable_disease") or "Unknown"
@@ -148,7 +289,13 @@ class LLMService:
         )
 
     def _call_with_failover(self, prompt: str) -> Optional[str]:
-        """Try each available key in order until one succeeds."""
+        """Text-only convenience wrapper around _call_parts."""
+        return self._call_parts([{"text": prompt}])
+
+    def _call_parts(self, parts: list, max_tokens: int = 400,
+                    read_timeout: int = 12) -> Optional[str]:
+        """Try each available key in order until one succeeds. `parts` is the Gemini
+        content parts list — text-only or text+inline image (multimodal)."""
         available = self._available_keys()
         if not available:
             return None
@@ -158,17 +305,26 @@ class LLMService:
                 url = GEMINI_URL_TEMPLATE.format(model=self.model)
                 resp = requests.post(
                     url,
-                    params={"key": key},
-                    headers={"Content-Type": "application/json"},
+                    # Auth via x-goog-api-key header — works for both legacy standard
+                    # keys and the newer authorization keys (AQ.* format). Query-param
+                    # (?key=) auth does NOT work for auth keys.
+                    headers={"Content-Type": "application/json", "x-goog-api-key": key},
                     json={
-                        "contents": [{"parts": [{"text": prompt}]}],
+                        "contents": [{"parts": parts}],
                         "generationConfig": {
                             "temperature": 0.4,
-                            "maxOutputTokens": 500,
+                            "maxOutputTokens": max_tokens,
                             "topP": 0.9,
+                            # Gemini 2.5 "thinks" before answering by default, which adds
+                            # real latency for a task that's just rephrasing known facts.
+                            # thinkingBudget=0 skips that step for fast, snappy replies.
+                            "thinkingConfig": {"thinkingBudget": 0},
                         },
                     },
-                    timeout=15,
+                    # (connect timeout, read timeout) — fail over to the next key fast
+                    # instead of leaving a farmer staring at a spinner. Vision needs
+                    # a longer read timeout than text.
+                    timeout=(5, read_timeout),
                 )
 
                 if resp.status_code == 200:

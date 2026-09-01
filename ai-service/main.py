@@ -136,13 +136,46 @@ async def chat_advisory(request: ChatRequest):
 
 
 @app.post("/api/v1/detect/image")
-async def detect_image(file: UploadFile = File(...)):
+async def detect_image(file: UploadFile = File(...), language: str = "en-IN"):
     image_bytes = await file.read()
     if not image_bytes:
         return {"error": "Empty file", "prediction": None}
     result = image_detector.predict(image_bytes)
     result["filename"] = file.filename
     result["file_size_kb"] = round(len(image_bytes) / 1024, 1)
+
+    mime = file.content_type if (file.content_type or "").startswith("image/") else "image/jpeg"
+
+    # SCOPE GATE (always-on, cheap): a fast yes/no "is this livestock?" check on EVERY
+    # image, so a non-animal can't slip through even when the CNN mislabels it with high
+    # confidence. Uses a tiny prompt (few tokens) so it's quick. Falls back to allow-if
+    # -unavailable (no key/offline) so the tool still works without the LLM.
+    if not llm_service.is_livestock_image(image_bytes, mime_type=mime):
+        result["rejected"] = True
+        result["reject_reason"] = "not_livestock"
+        result["vision"] = {
+            "rejected": True, "animal": "other",
+            "advice": llm_service.livestock_refusal(language),
+        }
+        return result  # do not diagnose a non-livestock image
+
+    # Gemini vision catch-all + verifier. We run the FULL multimodal read when EITHER:
+    #  (a) the CNN is uncertain (<0.85), OR
+    #  (b) the CNN predicts a poultry DISEASE class — those (esp. coccidiosis) are the
+    #      model's weak spot: it is CONFIDENTLY WRONG on cocci (mean conf ~0.89, ~64%
+    #      accurate), so a confidence threshold alone misses most errors. Gemini's
+    #      broader visual reasoning verifies/corrects these fecal-disease calls.
+    # Strong classes (cattle/goat, poultry_healthy/newcastle) skip this to stay fast.
+    cls_key = result.get("class_key", "")
+    weak_poultry = cls_key in ("poultry_cocci", "poultry_salmonella")
+    if (result.get("confidence") or 0) < 0.85 or weak_poultry:
+        cnn_hint = f"{result.get('prediction','')} ({int((result.get('confidence') or 0)*100)}pct)"
+        vision = llm_service.analyze_image(image_bytes, mime_type=mime,
+                                           language=language, cnn_hint=cnn_hint)
+        if vision:
+            result["vision"] = vision
+            if vision.get("rejected"):
+                result["rejected"] = True
     return result
 
 

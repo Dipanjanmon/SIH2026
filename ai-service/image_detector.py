@@ -13,7 +13,12 @@ from PIL import Image
 from typing import Dict
 from pathlib import Path
 
-MODEL_PATH = Path(__file__).parent / "models" / "cattle_disease_mobilenetv2.pth"
+# Multi-animal 10-class model (cattle+goat+poultry). Falls back to the old
+# 4-class cattle model if the multi model isn't present.
+_MODELS_DIR = Path(__file__).parent / "models"
+MODEL_PATH = _MODELS_DIR / "livestock_multi_mobilenetv2.pth"
+if not MODEL_PATH.exists():
+    MODEL_PATH = _MODELS_DIR / "cattle_disease_mobilenetv2.pth"
 
 DISEASE_INFO = {
     "foot_and_mouth": {
@@ -54,6 +59,65 @@ DISEASE_INFO = {
             "Maintain strict milking hygiene",
             "Discard affected milk"
         ]
+    },
+
+    # --- Multi-animal (10-class) model keys: species_condition ---
+    "cattle_fmd": {
+        "display_name": "Foot and Mouth Disease", "species": "cattle",
+        "description": "Viral disease causing blisters on mouth, tongue, and hooves",
+        "recommendations": ["Isolate animal immediately", "Contact veterinary authority",
+                            "Do not move livestock", "Ring vaccination recommended"],
+    },
+    "cattle_healthy": {
+        "display_name": "Healthy", "species": "cattle",
+        "description": "No visible signs of disease detected",
+        "recommendations": ["Continue routine monitoring", "Maintain vaccination schedule"],
+    },
+    "cattle_lumpy": {
+        "display_name": "Lumpy Skin Disease", "species": "cattle",
+        "description": "Viral disease causing firm, raised nodules on skin",
+        "recommendations": ["Isolate from herd", "Vector control (insect repellent)",
+                            "Report to veterinary authority", "Supportive care"],
+    },
+    "cattle_mastitis": {
+        "display_name": "Mastitis", "species": "cattle",
+        "description": "Bacterial udder infection causing swelling and milk changes",
+        "recommendations": ["Separate milking of affected quarter", "Vet-prescribed antibiotics",
+                            "Strict milking hygiene", "Discard affected milk"],
+    },
+    "goat_healthy": {
+        "display_name": "Healthy Goat", "species": "goat",
+        "description": "No visible signs of disease detected",
+        "recommendations": ["Continue routine monitoring", "Maintain vaccination (incl. PPR)"],
+    },
+    "goat_unhealthy": {
+        "display_name": "Unhealthy Goat (signs of illness)", "species": "goat",
+        "description": "Visible signs of ill health — describe symptoms for a specific diagnosis. PPR is the most common serious goat disease in India.",
+        "recommendations": ["Isolate the animal", "Describe symptoms for specific diagnosis",
+                            "Contact veterinarian", "Check for PPR (fever, nasal/eye discharge, diarrhea)"],
+    },
+    "poultry_cocci": {
+        "display_name": "Coccidiosis (Poultry)", "species": "poultry",
+        "description": "Intestinal parasitic disease; bloody droppings, weakness",
+        "recommendations": ["Isolate affected birds", "Anticoccidial in water (vet advised)",
+                            "Clean, dry litter", "Provide clean water"],
+    },
+    "poultry_salmonella": {
+        "display_name": "Salmonellosis (Poultry)", "species": "poultry",
+        "description": "Bacterial infection; white diarrhea, weakness. Zoonotic — handle hygienically",
+        "recommendations": ["Isolate affected birds", "Vet-prescribed antibiotics",
+                            "Disinfect housing", "Wash hands after handling"],
+    },
+    "poultry_newcastle": {
+        "display_name": "Newcastle Disease (Poultry)", "species": "poultry",
+        "description": "Highly contagious viral disease; twisted neck, paralysis, high mortality",
+        "recommendations": ["Isolate/report — highly contagious", "Vaccination is key prevention",
+                            "Contact veterinary authority", "Disinfect premises"],
+    },
+    "poultry_healthy": {
+        "display_name": "Healthy Poultry", "species": "poultry",
+        "description": "No visible signs of disease detected",
+        "recommendations": ["Continue routine monitoring", "Maintain Newcastle vaccination"],
     },
 }
 
@@ -126,11 +190,13 @@ class ImageDetector:
 
             return {
                 "prediction": top_info.get("display_name", top_class),
+                "species": top_info.get("species", ""),
+                "class_key": top_class,
                 "confidence": round(top_confidence, 4),
                 "description": top_info.get("description", ""),
                 "all_predictions": all_predictions,
                 "recommendations": top_info.get("recommendations", []),
-                "model_version": "mobilenetv2-v1",
+                "model_version": "mobilenetv2-multi-v2" if len(self.class_names) > 4 else "mobilenetv2-v1",
                 "note": "AI analysis based on trained CNN model. Confirm with veterinary examination."
             }
 
