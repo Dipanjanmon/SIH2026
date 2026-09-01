@@ -182,6 +182,38 @@ class LLMService:
 
         return self._parse_vision_json(raw, language)
 
+    def livestock_refusal(self, language: str = "en-IN") -> str:
+        """The localized 'please upload a livestock photo' message."""
+        return LIVESTOCK_REFUSAL.get(language, LIVESTOCK_REFUSAL["en-IN"])
+
+    def is_livestock_image(self, image_bytes: bytes, mime_type: str = "image/jpeg") -> bool:
+        """
+        Fast, always-on scope gate: asks Gemini a single yes/no — is this a farm/
+        livestock animal? Tiny prompt + tiny output = quick and cheap, so it can run
+        on EVERY image (closing the high-CNN-confidence ceiling).
+
+        Fails OPEN: if the LLM is unavailable (no key/offline), returns True so the
+        tool still works without the LLM (the CNN-only path stays functional).
+        """
+        if not self.enabled or not self._available_keys() or not image_bytes:
+            return True  # can't check -> don't block
+
+        import base64
+        b64 = base64.b64encode(image_bytes).decode("ascii")
+        parts = [
+            {"inline_data": {"mime_type": mime_type, "data": b64}},
+            {"text": (
+                "Does this image clearly show a farm/livestock animal "
+                "(cattle, buffalo, goat, sheep, chicken/poultry, or pig)? "
+                "Answer with ONLY one word: YES or NO."
+            )},
+        ]
+        # Very small output; short timeout keeps the request snappy.
+        raw = self._call_parts(parts, max_tokens=5, read_timeout=12)
+        if raw is None:
+            return True  # call failed -> fail open
+        return "yes" in raw.strip().lower()
+
     # Livestock species we accept. Anything else is out of scope.
     _LIVESTOCK = {"cattle", "buffalo", "goat", "sheep", "poultry", "chicken", "pig"}
 

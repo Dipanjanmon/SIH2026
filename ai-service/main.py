@@ -144,23 +144,36 @@ async def detect_image(file: UploadFile = File(...), language: str = "en-IN"):
     result["filename"] = file.filename
     result["file_size_kb"] = round(len(image_bytes) / 1024, 1)
 
-    # Gemini vision serves two jobs: (1) catch-all for animals the CNN wasn't trained
-    # on (buffalo/sheep/pig), and (2) SCOPE GATE that rejects non-livestock images
-    # (car, person, food) — the CNN alone can't reject those since it only outputs
-    # its 10 trained classes. We trigger it unless the CNN is very confident (>=0.85),
-    # so most uploads get scope-checked while confident animal hits skip the LLM call.
-    # ponytail: ceiling — a non-animal that the CNN mislabels with >=0.85 confidence
-    # would slip past the gate (rare, since non-animals score low). Upgrade path: run
-    # a lightweight animal/not-animal check on every image, or a binary gate head.
-    if (result.get("confidence") or 0) < 0.85:
-        mime = file.content_type if (file.content_type or "").startswith("image/") else "image/jpeg"
+    mime = file.content_type if (file.content_type or "").startswith("image/") else "image/jpeg"
+
+    # SCOPE GATE (always-on, cheap): a fast yes/no "is this livestock?" check on EVERY
+    # image, so a non-animal can't slip through even when the CNN mislabels it with high
+    # confidence. Uses a tiny prompt (few tokens) so it's quick. Falls back to allow-if
+    # -unavailable (no key/offline) so the tool still works without the LLM.
+    if not llm_service.is_livestock_image(image_bytes, mime_type=mime):
+        result["rejected"] = True
+        result["reject_reason"] = "not_livestock"
+        result["vision"] = {
+            "rejected": True, "animal": "other",
+            "advice": llm_service.livestock_refusal(language),
+        }
+        return result  # do not diagnose a non-livestock image
+
+    # Gemini vision catch-all + verifier. We run the FULL multimodal read when EITHER:
+    #  (a) the CNN is uncertain (<0.85), OR
+    #  (b) the CNN predicts a poultry DISEASE class — those (esp. coccidiosis) are the
+    #      model's weak spot: it is CONFIDENTLY WRONG on cocci (mean conf ~0.89, ~64%
+    #      accurate), so a confidence threshold alone misses most errors. Gemini's
+    #      broader visual reasoning verifies/corrects these fecal-disease calls.
+    # Strong classes (cattle/goat, poultry_healthy/newcastle) skip this to stay fast.
+    cls_key = result.get("class_key", "")
+    weak_poultry = cls_key in ("poultry_cocci", "poultry_salmonella")
+    if (result.get("confidence") or 0) < 0.85 or weak_poultry:
         cnn_hint = f"{result.get('prediction','')} ({int((result.get('confidence') or 0)*100)}pct)"
         vision = llm_service.analyze_image(image_bytes, mime_type=mime,
                                            language=language, cnn_hint=cnn_hint)
         if vision:
             result["vision"] = vision
-            # If Gemini says it's not a farm animal, propagate the rejection to the top
-            # level so the backend/frontend can block the diagnosis cleanly.
             if vision.get("rejected"):
                 result["rejected"] = True
     return result
