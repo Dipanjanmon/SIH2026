@@ -1,9 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: window.location.port === '80' || window.location.port === ''
-    ? '/api/v1'
-    : 'http://localhost:8080/api/v1',
+  baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
 });
 
