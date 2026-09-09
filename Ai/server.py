@@ -1,7 +1,14 @@
 from flask import Flask, request, jsonify, Response
 from chat import generate_reply, clear_history
 from voice_engine import tts_to_bytes, detect_lang
-from config import GEMINI_API_KEY, get_system_prompt, OPENROUTER_API_KEY, OPENROUTER_MODEL, MEDICAL_SYSTEM_PROMPT
+from config import (
+    GEMINI_API_KEY,
+    MODEL_NAME,
+    get_system_prompt,
+    OPENROUTER_API_KEY,
+    OPENROUTER_MODEL,
+    MEDICAL_SYSTEM_PROMPT,
+)
 from sessions import save_session, get_session, delete_session, recover_session, clear_session
 from Analysis.analyzer import (
     analyze_image,
@@ -69,21 +76,6 @@ def _cors_preflight():
 _chat_models = {}
 
 
-def get_model(tone="male"):
-    if tone not in CHAT_TONES:
-        tone = "male"
-    m = _chat_models.get(tone)
-    if m is None:
-        genai.configure(api_key=GEMINI_API_KEY)
-        m = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
-            system_instruction=get_system_prompt(tone),
-            generation_config=genai.GenerationConfig(temperature=0.7, max_output_tokens=500),
-        )
-        _chat_models[tone] = m
-    return m
-
-
 def openrouter_reply(message: str, system: str, history=None) -> str:
     msgs = [{"role": "system", "content": system}]
     if history:
@@ -108,13 +100,8 @@ def openrouter_reply(message: str, system: str, history=None) -> str:
 
 
 def ai_reply(message: str, tone: str = "male") -> str:
-    # Try Gemini first, then OpenRouter (free model), then None -> offline
-    try:
-        m = get_model(tone)
-        resp = m.generate_content(message)
-        return resp.text or "হুম..."
-    except Exception:
-        pass
+    # Generic (non-medical) chat uses ONLY OpenRouter — the Gemini key is
+    # reserved for medical/veterinary endpoints.
     try:
         return openrouter_reply(message, get_system_prompt(tone))
     except Exception:
@@ -147,13 +134,42 @@ def chat():
     return resp
 
 
+_med_model = None
+
+
+def get_med_model():
+    """Medical-assistant Gemini model — the shared medical API key is used ONLY
+    for medical/veterinary endpoints, never for the generic chat."""
+    global _med_model
+    if _med_model is None:
+        genai.configure(api_key=GEMINI_API_KEY)
+        _med_model = genai.GenerativeModel(
+            model_name=MODEL_NAME,
+            system_instruction=MEDICAL_SYSTEM_PROMPT,
+            generation_config=genai.GenerationConfig(temperature=0.5, max_output_tokens=700),
+        )
+    return _med_model
+
+
 def _medical_flow(user_id, message, tone):
-    """Real-time medical conversation with persistent session history."""
+    """Real-time medical conversation with persistent session history.
+    Gemini (medical) first with full history; OpenRouter as fallback."""
     hist = get_session(user_id) or []
+    reply = None
     try:
-        reply = openrouter_reply(message, MEDICAL_SYSTEM_PROMPT, history=hist if hist else None)
+        turns = [
+            {"role": "user" if h.get("role") == "user" else "model", "parts": [h.get("content", "")]}
+            for h in hist
+        ]
+        chat = get_med_model().start_chat(history=turns)
+        reply = (chat.send_message(message).text or "").strip()
     except Exception:
-        return None
+        reply = None
+    if not reply:
+        try:
+            reply = openrouter_reply(message, MEDICAL_SYSTEM_PROMPT, history=hist if hist else None)
+        except Exception:
+            return None
     hist.append({"role": "user", "content": message})
     hist.append({"role": "assistant", "content": reply})
     save_session(user_id, hist)
@@ -334,7 +350,7 @@ def get_vet_model(tone="male"):
     if m is None:
         genai.configure(api_key=GEMINI_API_KEY)
         m = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
+            model_name=MODEL_NAME,
             system_instruction=VET_SYSTEM_PROMPT + "\n" + VET_TONE_RULES.get(tone, VET_TONE_RULES["male"]),
             generation_config=genai.GenerationConfig(temperature=0.7, max_output_tokens=800),
         )
@@ -487,6 +503,95 @@ def api_hospitals():
 @app.route("/api/vet-kb", methods=["GET"])
 def api_vet_kb():
     return _cors(jsonify(load_vet_kb()))
+
+
+# ------------------------- # medicine + hospital recommendation # ------ #
+MEDICINES_PATH = Path(__file__).resolve().parent / "Analysis" / "medicines.json"
+_MEDICINE_LOADED = None
+
+
+def load_medicines() -> dict:
+    global _MEDICINE_LOADED
+    if _MEDICINE_LOADED is None:
+        with open(MEDICINES_PATH, encoding="utf-8") as fp:
+            _MEDICINE_LOADED = _json.load(fp)
+    return _MEDICINE_LOADED
+
+
+def _map_disease_key(name: str):
+    """Loose match from a problem/disease name (or normalized model label) to a
+    medicines.json key. e.g. 'Lumpy Skin Disease' -> 'lumpy_skin'."""
+    if not name:
+        return None
+    text = str(name).lower().replace("-", "_")
+    tokens = {t for t in text.replace("_", " ").split() if t}
+    for token, key in [
+        ("foot", "foot_and_mouth"), ("fmd", "foot_and_mouth"),
+        ("lumpy", "lumpy_skin"), ("lsd", "lumpy_skin"),
+        ("mastitis", "mastitis"), ("cocci", "coccidiosis"),
+        ("newcastle", "newcastle"), ("ranikhet", "newcastle"),
+        ("salmonella", "salmonella"), ("brucellosis", "brucellosis"),
+        ("anthrax", "anthrax"),
+    ]:
+        if token in tokens:
+            return key
+    if any(t in tokens for t in ("healthy", "normal")):
+        return "healthy"
+    return None
+
+
+@app.route("/api/recommend", methods=["GET", "POST"])
+def api_recommend():
+    """Medicine + nearest vet hospital for a detected disease + location.
+
+    POST body or query params: disease (name/key), lat, lng, state, limit."""
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        disease = (data.get("disease") or "").strip() or None
+        lat = data.get("lat"); lng = data.get("lng")
+        state = (data.get("state") or "").strip() or None
+        limit = data.get("limit", 3)
+    else:
+        disease = (request.args.get("disease") or "").strip() or None
+        lat = request.args.get("lat"); lng = request.args.get("lng")
+        state = request.args.get("state") or None
+        limit = request.args.get("limit", "3")
+
+    if not disease:
+        return _cors(jsonify({"error": "disease parameter required"})), 400
+
+    meds = load_medicines()
+    key = _map_disease_key(disease)
+    entry = meds["diseases"].get(key) if key else None
+    if entry is None:
+        entry = meds["general"]
+
+    hospitals = nearby_hospitals(
+        lat=float(lat) if lat else None,
+        lng=float(lng) if lng else None,
+        state=state,
+        limit=max(1, min(int(limit or 3), 10)),
+    )
+
+    result = {
+        "disease": {
+            "requested": disease,
+            "key": key,
+            "bn_name": entry.get("bn_name"),
+            "category": entry.get("category"),
+            "report": entry.get("report"),
+            "vaccine": entry.get("vaccine"),
+        },
+        "medicines": entry.get("medicines", []),
+        "care": entry.get("care"),
+        "hospitals": {
+            "helpline": meds.get("helpline", "1962"),
+            "nearby": hospitals,
+        },
+        "disclaimer": meds.get("disclaimer", ""),
+        "location_used": {"lat": float(lat) if lat else None, "lng": float(lng) if lng else None, "state": state},
+    }
+    return _cors(jsonify(result))
 
 
 @app.route("/health", methods=["GET"])
