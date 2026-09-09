@@ -9,6 +9,7 @@ RUN mvn package -DskipTests -B
 # Stage 2: Run with JRE
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
+COPY credentials.json .
 COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
