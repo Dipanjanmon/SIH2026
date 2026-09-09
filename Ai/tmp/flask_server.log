@@ -1,7 +1,0 @@
-[PashuSahaya] Warming up SpeciesNet + custom disease models...
-[analyzer] SpeciesNet loaded in 1.8s
-[analyzer] custom model 'cattle_disease_mobilenetv2' ready (4 classes)
-[analyzer] custom model 'livestock_multi_mobilenetv2' ready (10 classes)
-[PashuSahaya] Models ready — serving on http://127.0.0.1:5000
- * Serving Flask app 'server'
- * Debug mode: off

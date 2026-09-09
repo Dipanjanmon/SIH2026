@@ -1,0 +1,52 @@
+# ===== Node / Frontend =====
+node_modules/
+Frontent/node_modules/
+frontend/node_modules/
+Frontent/dist/
+frontend/dist/
+dist/
+
+# Vite / build cache
+Frontent/.vite/
+*.vite/
+
+# ===== Logs =====
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Python / AI =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+Ai/tmp/
+Ai/Analysis/__pycache__/
+
+# ===== Java / Kotlin (backend) =====
+.gradle/
+build/
+target/
+out/
+*.class
+
+# ===== Env / secrets =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+keystore*
+application-local.yml
+application-local.properties
+
+# ===== IDE / OS =====
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
