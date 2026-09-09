@@ -1,0 +1,118 @@
+{
+  "version": "1.0",
+  "helpline": "1962",
+  "disclaimer": "তালিকা শুধুমাত্র পশুচিকিৎসা সহকারী/কর্মকর্তার তত্ত্বাবধানে ব্যবহার করবেন। প্রতিটি ওষুধ পশুর ওজন অনুযায়ী ডোজ প্রয়োজন — নির্দিষ্ট ডোজ/মাত্রার জন্য অবশ্যই নিকটস্থ পশু হাসপাতাল বা ভেটেরিনারি ডাক্তারকে দেখান। এটা প্রেসক্রিপশন নয়, জরুরি প্রাথমিক ব্যবস্থার তথ্যমাত্র।",
+  "diseases": {
+    "foot_and_mouth": {
+      "bn_name": "পা ও মুখের রোগ (FMD)",
+      "category": "Viral — Notifiable",
+      "report": "FMD নোটিফায়েবল রোগ — অবিলম্বে প্রাণিসম্পদ কর্মকর্তাকে জানান; মৃত পশু খোলা যাবে না।",
+      "medicines": [
+        {"name": "Potassium permanganate / Boroplus antiseptic mouth & hoof wash", "purpose": "আলসার ও খুরের ক্ষত পরিষ্কার রাখতে"},
+        {"name": "Meloxicam (vet) / Ketoprofen injection", "purpose": "ব্যথা ও জ্বর নিয়ন্ত্রণ"},
+        {"name": "Oxytetracycline LA (long-acting) injection", "purpose": "দ্বিতীয় ব্যাকটেরিয়া সংক্রমণ রোধ (ভেটের অনুমতিতে)"},
+        {"name": "Electrolyte + multivitamin powder (water-mixed)", "purpose": "দুর্বলতা ও পানিশূন্যতা কমাতে"}
+      ],
+      "care": "আক্রান্ত পশু আলাদা রাখুন; নরম ভুত্বক ঘাস/খড় খাওয়ান; খুরের ক্ষত ঢালবে। টিম মার্কস, L-3 টাইপ পায়ের ব্যথায় চিউইং বা গিলতে অসুবিধা হলে তরল খাবার দিতে পারেন।",
+      "vaccine": "FMD টিকা (6 মাস অন্তর) — কর্মকর্তার মাধ্যমে বিনামূল্যে।"
+    },
+    "lumpy_skin": {
+      "bn_name": "লাম্পি স্কিন ডিজিজ (LSD)",
+      "category": "Viral (LSDV) — Notifiable",
+      "report": "LSD নোটিফায়েবল — এলাকা-ভিত্তিক টিকাদান: Goat Pox / LSD vaccine। মাসিক সতর্কতা।",
+      "medicines": [
+        {"name": "Calamine/lotion + povidone-iodine topical", "purpose": "ত্বকের পিণ্ডের ক্ষত পরিষ্কার ও শুকাতে"},
+        {"name": "Antipyretic + analgesic (Meloxicam / Flunixin)", "purpose": "জ্বর ও ব্যথা"},
+        {"name": "Broad-spectrum antibiotic (Oxytetracycline LA / Amoxicillin)", "purpose": "দ্বিতীয় সংক্রমণ রোধ (ভেট-নির্ধারিত ডোজ)"},
+        {"name": "Multivitamin + zinc supplement", "purpose": "ত্বক ও পুনরুদ্ধার"}
+      ],
+      "care": "মশা/কামড়ের বাহক নিয়ন্ত্রণ (fly repellent, সন্ধ্যায় স্থান পরিষ্কার); আক্রান্ত পশু ৪ সপ্তাহ আলাদা।",
+      "vaccine": "LSD/GPV vaccine — কর্মকর্তার মাধ্যম।"
+    },
+    "mastitis": {
+      "bn_name": "ম্যাস্টাইটিস (দোহনের থানার প্রদাহ)",
+      "category": "Bacterial / Subclinical",
+      "report": "জ্বর, থানা ফুলে বা কালশিটে হলে দ্রুত ভেট দেখান।",
+      "medicines": [
+        {"name": "Intramammary antibiotic tube (oxytetracycline/cloxacillin)", "purpose": "থানার ভেতর ওষুধ — ভেট-নির্দেশিত"},
+        {"name": "Systemic antibiotic (penicillin+streptomycin / ceftiofur) injection", "purpose": "গভীর সংক্রমণ"},
+        {"name": "Anti-inflammatory (Meloxicam / Dexamethasone)", "purpose": "প্রদাহ ও জ্বর"},
+        {"name": "Oxytocin (সামান্য, দোহনের সময়) + NSAID", "purpose": "দুধ নামাতে ও ব্যথা কমাতে (ভেট তত্ত্বাবধানে শুধু)"}
+      ],
+      "care": "ঘন ঘন ডরি পরিষ্কার হাতে/নতুন তোয়ালে দিয়ে দোহন; দুধ ছেঁকে দেখুন ক্লট আছে কি না।",
+      "vaccine": "ঐচ্ছিক — mastitis vaccine (Staph/Strep) কৃষক পর্যায়ে।"
+    },
+    "coccidiosis": {
+      "bn_name": "কক্সিডিওসিস",
+      "category": "Parasitic (protozoa)",
+      "report": "রক্তমিশ্রিত ঝলমলে মল + ঝিমানো মুরগি → দ্রুত চিকিৎসা।",
+      "medicines": [
+        {"name": "Amprolium (water medication) ২-৩ দিন", "purpose": "কক্সিডিয়া নিয়ন্ত্রণ"},
+        {"name": "Toltrazuril (Baycox-type) — একক ডোজ", "purpose": "কঠিন কেস"},
+        {"name": "Vitamin K + A + electrolyte", "purpose": "রক্তপাত ও দুর্বলতা কমানো"},
+        {"name": "Probiotic / prebiotic", "purpose": "পরিবেশ-পরবর্তী পুনরুদ্ধার"}
+      ],
+      "care": "বিচালনা (litter) শুকনো রাখুন; বাচ্চাকে মায়ের মল থেকে দূরে রাখুন।",
+      "vaccine": "কক্সি ভ্যাকসিন (broiler/breeder) — ঐচ্ছিক।"
+    },
+    "newcastle": {
+      "bn_name": "নিউক্যাসল / রানীক্ষেত",
+      "category": "Viral — Notifiable (ND)",
+      "report": "ND নোটিফায়েবল — মৃত মুরগির অবশিষ্ট সঠিকভাবে নিষ্পত্তি; আক্রান্ত পাল আলাদা।",
+      "medicines": [
+        {"name": "Electrolytes + vitamin premix (water)", "purpose": "শক্তি ও প্রতিরোধ"},
+        {"name": "Supportive: liver tonic, poultry multivitamin", "purpose": "লক্ষণ কমানো (ND-র নিরাময় নেই)"},
+        {"name": "Secondary antibiotic (Enrofloxacin) — ভেট নির্দেশে", "purpose": "দ্বিতীয় সংক্রমণ নামাতে"}
+      ],
+      "care": "ভাইরাসের কোনো সরাসরি চিকিৎসা নেই — কোয়ারেন্টাইন + জীবাণুমুক্তকরণ + ভালো পুষ্টিই মূল। মৃত্যু হলে সব ঠিকভাবে পরিষ্কার ও নিষ্পত্তি করবেন।",
+      "vaccine": "ND LaSota / R2B vaccine — টিকা 100% রক্ষা করে।"
+    },
+    "salmonella": {
+      "bn_name": "সালমোনেলা (Pullorum / Typhoid)",
+      "category": "Bacterial — Zoonotic risk",
+      "report": "মুরগির ছানা ঝিমানো + সাদা মল; হাত-ধোয়া অবশ্যই।",
+      "medicines": [
+        {"name": "Enrofloxacin / Florfenicol (water medication)", "purpose": "প্রথম সারির অ্যান্টিবায়োটিক (ভেট-নির্দেশিত ডোজ)"},
+        {"name": "Electrolyte + glucose", "purpose": "পানিশূন্যতা"},
+        {"name": "Probiotic after antibiotic course", "purpose": "ভালো ব্যাকটেরিয়া ফিরিয়ে আনা"}
+      ],
+      "care": "ডিম/ছানা উৎসে নিয়ন্ত্রণ; ঘর ও পানির পাত্র ভালোভাবে জীবাণুমুক্ত করুন।",
+      "vaccine": "Salmonella vaccine (হ্যাচারি লেভেলে)।"
+    },
+    "brucellosis": {
+      "bn_name": "ব্রুসেলোসিস (গর্ভপাত জ্বর)",
+      "category": "Bacterial — Zoonotic",
+      "report": "গর্ভবতী পশুর গর্ভপাত + জ্বর → অবিলম্বে জানান; পশু পরিচর্যার সময় গ্লাভস।",
+      "medicines": ["এটি ভেট-বাধ্যতামূলক রোগব্যবস্থা — নিজে থেকে অ্যান্টিবায়োটিক দেবেন না; স্যাম্পল নিয়ে পরীক্ষা করুন।"],
+      "care": "গর্ভপাতের স্থান ও উপকরণ জীবাণুমুক্ত; মানুষ সংক্রমণ রোধে গ্লাভস।",
+      "vaccine": "Brucella abortus S19 / RB51 (বয়স অনুযায়ী)।"
+    },
+    "anthrax": {
+      "bn_name": "অ্যানথ্রাক্স",
+      "category": "Bacterial — Notifiable + Zoonotic (জরুরি)",
+      "report": "মৃত পশু খোলে যাবে না! অবিলম্বে কর্মকর্তা।",
+      "medicines": ["অ্যানথ্রাক্স সন্দেহে নিজে ওষুধ নয় — জরুরি ভেট/কর্মকর্তা ডাকুন।"],
+      "care": "মৃতদেহ স্পর্শ না করে রিপোর্ট করুন; এলাকা কোয়ারেন্টাইন।",
+      "vaccine": "Anthrax Spore vaccine — এলাকা-ভিত্তিক।"
+    },
+    "healthy": {
+      "bn_name": "সুস্বাস্থ্যক",
+      "category": "No disease detected",
+      "medicines": [
+        {"name": "রুটিন: ডি-ওয়ার্মিং (Albendazole/Fenbendazole) প্রতি ৩ মাস", "purpose": "পরজীবী নিয়ন্ত্রণ"},
+        {"name": "মিনারেল ও ভিটামিন বালাম (বছরে ১-২ বার)", "purpose": "প্রতিরোধ"}
+      ],
+      "care": "নিয়মিত টিকা + পরিষ্কার পানি + সুষম খাদ্য।",
+      "vaccine": "প্রতি ৬ মাসে FMD টিকা; বছরে LSD/HS/BQ টিকা।"
+    }
+  },
+  "general": {
+    "bn_name": "সাধারণ রোগব্যবস্থা",
+    "medicines": [
+      {"name": "Electrolyte + multivitamin (জলে মেশানো)", "purpose": "দুর্বলতায়"},
+      {"name": "Broad-spectrum antibiotic + NSAID (ভেট নির্দেশে)", "purpose": "জ্বর/সংক্রমণে"},
+      {"name": "Antiseptic (povidone-iodine) — ক্ষত পরিষ্কারে", "purpose": "প্রাথমিক পরিচর্যা"}
+    ],
+    "care": "অবিলম্বে নিকটস্থ পশু হাসপাতাল বা হেল্পলাইন 1962-এ যোগাযোগ করুন।"
+  }
+}

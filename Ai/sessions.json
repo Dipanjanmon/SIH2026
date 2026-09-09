@@ -195,5 +195,89 @@
     "content": "হ্যালো! আমি তোমার প্রশ্ন বা সমস্যার সাথে সাহায্য করতে চাই। আমি বাংলায় কথা বলতে পারি। তোমার কী প্রশ্ন আছে? গরু, মুরগি, ছাগল, ভেড়া, কুকুর বা অন্য কোনো পশু সম্পর্কিত কোনো সমস্যা হলে বলে দাও, আমি তোমার সাহায্য করব।"
    }
   ]
+ },
+ "vet:uid_mtu6x3mx6eqj": {
+  "updated": 1788967423.9709566,
+  "history": [
+   {
+    "role": "user",
+    "content": "hi"
+   },
+   {
+    "role": "assistant",
+    "content": "Hello! I am **PashuSahaya**, your AI veterinary assistant. \n\nHow can I help you today? Please tell me about your animal (cow, goat, poultry, pet, etc.) and any symptoms or questions you have regarding:\n\n- Disease symptoms or emergencies\n- Vaccination and prevention\n- Nutrition and care\n- Breeding and management\n\n*Note: For urgent medical issues, please contact your nearest local veterinary officer or call the national livestock helpline at 1962.*"
+   },
+   {
+    "role": "user",
+    "content": "hi amr dog er jor hoyeche ki korbo bolotoh"
+   },
+   {
+    "role": "assistant",
+    "content": "Hello! Dog-er jor (fever) howa kono infection ba roger sposhto lokkhon hote pare. Unnat chikits"
+   },
+   {
+    "role": "user",
+    "content": "amr dog kemon akta paglamo korche ki korbo"
+   },
+   {
+    "role": "assistant",
+    "content": "Chinta korben na, ami apnake shahajjo korchhi. Dog unusual behavior ba unusual aggression (paglamo) dekhale shurokk"
+   },
+   {
+    "role": "user",
+    "content": "my dog somthing show like mad what id do"
+   },
+   {
+    "role": "assistant",
+    "content": "Hello! Please stay calm, but prioritize your safety right now. Sudden \"mad\" or abnormal behavior in a dog requires immediate attention and caution."
+   },
+   {
+    "role": "user",
+    "content": "bengali te bolo"
+   },
+   {
+    "role": "assistant",
+    "content": "আপনার কুকুরের হঠাৎ অস্বাভাবিক বা পাগলাটে আচরণ করা একটি জরুরি স্বাস্থ্য সমস্যা হতে পারে। এতে আতঙ্কিত না হয়ে অবিলম্বে সতর্কতামূলক ব্যবস্থা নিন।"
+   }
+  ]
+ },
+ "gemtest": {
+  "updated": 1788964444.4941144,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar buk betha korche, ki korte parbo?"
+   },
+   {
+    "role": "assistant",
+    "content": "**সতর্কতা:** আমার এই তথ্যগুলো কোনো ডাক্তারি নির্ণয় বা সরাসরি চিকিৎসা নয়, শুধুমাত্র সাধারণ তথ"
+   }
+  ]
+ },
+ "vet:gemtest-vet": {
+  "updated": 1788964464.5646248,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar gorur gai te dana poreche eta ki?"
+   },
+   {
+    "role": "assistant",
+    "content": "Apnar gorur gaye dana ba fula dekhe mone hochhe eta **Lumpy Skin Disease (LSD)** ba kono allergic reaction"
+   }
+  ]
+ },
+ "vet:lang-vet": {
+  "updated": 1788966896.492128,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar gorur gai te dana poreche eta ki?"
+   },
+   {
+    "role": "assistant",
+    "content": "Apnar gorur gaye dana ba fola dekha deoya sombhoboto **Lumpy Skin Disease (LSD)** er lokkh"
+   }
+  ]
  }
 }
