@@ -25,7 +25,7 @@ services:
 
   ai:
     build:
-      context: ./ai-service
+      context: ./Ai
       dockerfile: Dockerfile
     container_name: pashuraksha_ai
     environment:
@@ -66,7 +66,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./Frontent
       dockerfile: Dockerfile
     container_name: pashuraksha_frontend
     ports:
