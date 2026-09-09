@@ -21,7 +21,7 @@ def _read_secret(name):
     return ""
 
 GEMINI_API_KEY = _read_secret("GEMINI_API_KEY")
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = "gemini-3.6-flash"
 
 OPENROUTER_API_KEY = _read_secret("OPENROUTER_API_KEY")
 OPENROUTER_MODEL = "qwen/qwen-2.5-72b-instruct"
