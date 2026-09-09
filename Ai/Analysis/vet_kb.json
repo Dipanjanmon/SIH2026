@@ -1,0 +1,295 @@
+{
+  "species_groups": {
+    "cattle": {
+      "category": "Livestock",
+      "label": "Cattle",
+      "alias_taxa": ["cattle", "bos", "bovinae", "bos taurus", "zebu", "indicus", "ox", "cow"],
+      "common_conditions": [
+        {
+          "name": "Foot-and-Mouth Disease (FMD)",
+          "signs": "Fever, drooling, vesicles/blisters on mouth, tongue, teats and feet, lameness",
+          "advice": "Isolate animal, notify Block Veterinary Officer; FMD is a notifiable disease under NADCP",
+          "severity": "high"
+        },
+        {
+          "name": "Lumpy Skin Disease (LSD)",
+          "signs": "Fever, multiple skin nodules, reduced milk yield, swollen lymph nodes",
+          "advice": "Isolate; supportive care, antivirals under vet supervision; ring vaccination live around hotspots",
+          "severity": "high"
+        },
+        {
+          "name": "Mastitis",
+          "signs": "Swollen, hot, painful udder; abnormal/clotted milk; fever",
+          "advice": "Separation + gentle milking, vet for antibiotic based on culture",
+          "severity": "medium"
+        },
+        {
+          "name": "Parasitic infection (worm burden)",
+          "signs": "Weight loss, rough coat, pale gums, diarrhea, bottle jaw",
+          "advice": "Deworm with approved anthelmintic; improve hygiene",
+          "severity": "medium"
+        },
+        {
+          "name": "Fever / Generalized illness",
+          "signs": "Dullness, anorexia, high rectal temperature, drop in rumination",
+          "advice": "Record temperature daily; consult MVU quickly",
+          "severity": "medium"
+        }
+      ],
+      "care_tips": "Clean dry housing, regular deworming, neck-tag vaccination schedule, green fodder + mineral supplement",
+      "red_flags": ["drooling", "nodules", "nonstop diarrhea", "recumbent", "blood in milk"],
+      "helpline_note": "Report notifiable diseases to helpline 1962 or nearest State Veterinary Dispensary"
+    },
+    "buffalo": {
+      "category": "Livestock",
+      "label": "Buffalo",
+      "alias_taxa": ["buffalo", "bubalus", "water buffalo", "carabao"],
+      "common_conditions": [
+        {
+          "name": "FMD",
+          "signs": "Same as cattle - fever, mouth blisters, lameness, drooling",
+          "advice": "Isolate, notify vet; notifiable disease",
+          "severity": "high"
+        },
+        {
+          "name": "Brucellosis",
+          "signs": "Abortion storms, retained placenta, infertility, arthritis",
+          "advice": "Test herd, cull positive, vaccinate calves (B. abortus strain-19/B5)",
+          "severity": "high"
+        },
+        {
+          "name": "Haemorrhagic septicaemia (HS)",
+          "signs": "High fever, swelling of throat/neck, respiratory distress, sudden death",
+          "advice": "Emergency - call mobile vet unit; vaccination best prevention",
+          "severity": "high"
+        },
+        {
+          "name": "Trypanosomiasis / Surra",
+          "signs": "Intermittent fever, anemia, edema, abortion",
+          "advice": "Blood smear by vet; treat with trypanocide",
+          "severity": "medium"
+        }
+      ],
+      "care_tips": "Wallowing area, shade, mineral lick; regular HS & FMD vaccination",
+      "red_flags": ["neck swelling", "gasping", "abortion", "sudden death in herd"],
+      "helpline_note": "Call 1962 / MVU for suspected HS or anthrax immediately"
+    },
+    "goat": {
+      "category": "Livestock",
+      "label": "Goat / Sheep (Small Ruminant)",
+      "alias_taxa": ["goat", "capra", "sheep", "ovis", "ovine", "caprine", "kid", "lamb"],
+      "common_conditions": [
+        {
+          "name": "PPR (Goat Plague)",
+          "signs": "High fever, ocular-nasal discharge, necrotic mouth lesions, diarrhea",
+          "advice": "Isolate; supportive care; PPR vaccine available free under govt programs",
+          "severity": "high"
+        },
+        {
+          "name": "Peste des petits ruminants",
+          "signs": "Same as above (synonym of PPR)",
+          "advice": "Notify vet; control spread in flock",
+          "severity": "high"
+        },
+        {
+          "name": "Internal parasites",
+          "signs": "Bottle jaw (edema under jaw), pale conjunctiva, diarrhea, emaciation",
+          "advice": "FAMACHA scoring by vet; targeted deworming",
+          "severity": "medium"
+        },
+        {
+          "name": "Enterotoxaemia (pulpy kidney)",
+          "signs": "Sudden death in well-fed kids; convulsions, scouring",
+          "advice": "Vaccination; dietary consistency",
+          "severity": "high"
+        }
+      ],
+      "care_tips": "Elevated clean housing, foot care, both major viral vaccines (PPR, ET), mineral salt block",
+      "red_flags": ["mouth ulcers", "bottle jaw", "sudden death", "convulsions"],
+      "helpline_note": "PPR is notifiable - report to 1962 / state AH department"
+    },
+    "pig": {
+      "category": "Livestock",
+      "label": "Pig (Swine)",
+      "alias_taxa": ["pig", "swine", "sus", "boar", "porcine", "hog", "piglet"],
+      "common_conditions": [
+        {
+          "name": "African Swine Fever (ASF)",
+          "signs": "High fever, sudden death, blood-tinged diarrhea, skin redness/cyanosis",
+          "advice": "NOTIFIABLE - immediate quarantine & inform District Vet Officer; movement ban may apply",
+          "severity": "high"
+        },
+        {
+          "name": "Classical Swine Fever (CSF)",
+          "signs": "Fever, lethargy, conjunctivitis, skin hemorrhage, constipation then diarrhea",
+          "advice": "Vaccination; biosecurity; report suspicious deaths",
+          "severity": "high"
+        },
+        {
+          "name": "Swine erysipelas",
+          "signs": "Diamond-shaped skin lesions, fever, sudden death",
+          "advice": "Vet antibiotics; hygiene",
+          "severity": "medium"
+        }
+      ],
+      "care_tips": "Strict biosecurity, no swill feeding of uncooked meat, regular footbath, vaccination",
+      "red_flags": ["sudden multiple deaths", "bloody diarrhea", "red skin blotches"],
+      "helpline_note": "ASF movement ban zones are active - check Cases module before transport"
+    },
+    "poultry": {
+      "category": "Poultry",
+      "label": "Poultry / Birds",
+      "alias_taxa": ["chicken", "gallus", "poultry", "duck", "goose", "bird", "aves", "fowl", "broiler"],
+      "common_conditions": [
+        {
+          "name": "Avian Influenza (H5N1)",
+          "signs": "Sudden high mortality, swollen head/comb/wattles, cyanosis, greenish diarrhea",
+          "advice": "NOTIFIABLE - culling zone may apply; report immediately to helpline 1962 / District Vet",
+          "severity": "high"
+        },
+        {
+          "name": "Newcastle Disease (Ranikhet)",
+          "signs": "Respiratory distress, twisting neck, green diarrhea, drop in egg production",
+          "advice": "Vaccination (Lasota/R2B); strict biosecurity",
+          "severity": "high"
+        },
+        {
+          "name": "Coccidiosis",
+          "signs": "Bloody droppings, ruffled feathers, anemia, poor growth",
+          "advice": "Anticoccidial in feed/water; dry litter management",
+          "severity": "medium"
+        },
+        {
+          "name": "Infectious bursal disease (Gumboro)",
+          "signs": "Sudden mortality in chicks, vent-pecking, watery white diarrhea",
+          "advice": "Vaccinate; hygiene",
+          "severity": "medium"
+        }
+      ],
+      "care_tips": "Litter management, adequate ventilation, all-in-all-out system, vaccination schedule per age",
+      "red_flags": ["sudden mass mortality", "swollen head", "twisting neck", "bloody droppings"],
+      "helpline_note": "Any unusual poultry die-off must be reported - AI is in culling zone status in parts of India"
+    },
+    "dog": {
+      "category": "Pet",
+      "label": "Dog / Canine",
+      "alias_taxa": ["dog", "canis", "canine", "puppy", "fox", "wolf", "canidae", "coyote", "jackal", "wild dog"],
+      "common_conditions": [
+        {
+          "name": "Canine Distemper",
+          "signs": "Fever, nasal/ocular discharge, diarrhea, twitching, fits, hard pad disease",
+          "advice": "Vet consult; supportive care; vaccination core protection",
+          "severity": "high"
+        },
+        {
+          "name": "Parvovirus",
+          "signs": "Vomiting, fetid bloody diarrhea, lethargy, dehydration",
+          "advice": "Emergency - IV fluids + vet care; vaccinate",
+          "severity": "high"
+        },
+        {
+          "name": "Rabies (exposure risk)",
+          "signs": "Behavior change, salivation, paralysis, hydrophobia",
+          "advice": "Human safety first - if bitten, wash wound & post-exposure vaccine; animal quarantine",
+          "severity": "high"
+        },
+        {
+          "name": "Skin / parasite (mange, ticks)",
+          "signs": "Hair loss, itching, crusts, tick infestation",
+          "advice": "Ectoparasite control + vet topical/scab treatment",
+          "severity": "low"
+        }
+      ],
+      "care_tips": "Rabies vaccine yearly, deworming, balanced diet, leash + ID tag",
+      "red_flags": ["fits", "bloody diarrhea", "unprovoked aggression", "drooling"],
+      "helpline_note": "Suspected rabies = treat as public health emergency, contact helpline 1962 / district AH"
+    },
+    "cat": {
+      "category": "Pet",
+      "label": "Cat / Feline",
+      "alias_taxa": ["cat", "felis", "feline", "kitten", "wildcat", "felidae", "tiger", "lion", "leopard"],
+      "common_conditions": [
+        {
+          "name": "Feline Panleukopenia (FPV)",
+          "signs": "High fever, vomiting, diarrhea, dehydration, sudden death in kittens",
+          "advice": "Emergency vet care; vaccination",
+          "severity": "high"
+        },
+        {
+          "name": "Feline Respiratory complex (URI)",
+          "signs": "Sneezing, conjunctivitis, nasal discharge, mouth ulcers",
+          "advice": "Vet supportive care; vaccination (FVRCP)",
+          "severity": "medium"
+        },
+        {
+          "name": "Skin/ear mites & fleas",
+          "signs": "Intense scratching, hair loss, dark ear debris",
+          "advice": "Parasite control products from vet; clean environment",
+          "severity": "low"
+        }
+      ],
+      "care_tips": "Indoor safety, FVRCP wear, deworming, litter hygiene",
+      "red_flags": ["vomiting blood", "nonresponsive", "seizures"],
+      "helpline_note": "Use 1962 for vaccination guidance"
+    },
+    "wildlife": {
+      "category": "Wildlife",
+      "label": "Wildlife",
+      "alias_taxa": ["elephant", "tiger", "lion", "leopard", "wolf", "jackal", "deer", "cervid", "boar", "warthog", "wild boar", "monkey", "primate", "peacock", "hornbill", "macaque", "langur", "gazelle", "antelope", "bungarus", "nilgai", "chital", "sambar", "hyena", "bear", "sloth bear", "jungle cat", "fox", "dhole", "wild"],
+      "common_conditions": [
+        {
+          "name": "Anthrax (herbivore risk)",
+          "signs": "Sudden death with blood from orifices, bloating",
+          "advice": "Do NOT open carcass - contact Forest+AH dept; human risk",
+          "severity": "high"
+        },
+        {
+          "name": "Injury / trauma (roadkill, snare)",
+          "signs": "Limping, wounds, bleeding",
+          "advice": "Report to forest department rescue team",
+          "severity": "high"
+        },
+        {
+          "name": "Malnutrition / emaciation",
+          "signs": "Prominent ribs, dull coat, weakness",
+          "advice": "Report; do not approach - wildlife handling requires permits",
+          "severity": "medium"
+        }
+      ],
+      "care_tips": "Do not approach or feed wild animals; report via forest department helpline",
+      "red_flags": ["blood from orifices", "down animal", "poaching injuries"],
+      "helpline_note": "Wildlife emergencies: State Forest Dept + helpline 1962 for zoonotic risk"
+    },
+    "fish": {
+      "category": "Aquaculture",
+      "label": "Fish / Aquatic",
+      "alias_taxa": ["fish", "carp", "rohu", "catla", "tilapia", "shrimp", "prawn", "piscine", "aquatic"],
+      "common_conditions": [
+        {
+          "name": "Epizootic Ulcerative Syndrome (EUS)",
+          "signs": "Red/hemorrhagic skin ulcers, gray rotten areas, lethargy",
+          "advice": "Check water quality; isolate affected pond; sodium chloride + vet advice",
+          "severity": "high"
+        },
+        {
+          "name": "Columnaris / fungal & bacterial",
+          "signs": "Cotton-wool growths, frayed fins, gill damage, surface gasping",
+          "advice": "Water quality correction; approved treatments",
+          "severity": "medium"
+        },
+        {
+          "name": "Low dissolved oxygen (asphyxia)",
+          "signs": "Surface gasping, death at dawn, morning kills",
+          "advice": "Aeration, reduce stocking, check plankton bloom",
+          "severity": "medium"
+        }
+      ],
+      "care_tips": "Monitor DO, pH, ammonia daily; species-specific stocking density",
+      "red_flags": ["morning mass kills", "surface gasping", "ulceration"],
+      "helpline_note": "Fisheries department + 1962 for disease queries"
+    }
+  },
+  "fallback_list": ["cattle", "buffalo", "goat", "pig", "poultry", "dog", "cat", "wildlife", "fish"],
+  "helpline": "1962",
+  "disclaimer": "AI-assisted screening only — not a veterinary diagnosis. Always confirm with a registered veterinary officer and the national helpline 1962."
+}

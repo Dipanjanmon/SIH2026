@@ -1,61 +1,52 @@
-# Dependencies
+# ===== Node / Frontend =====
 node_modules/
-target/
-.venv/
-__pycache__/
-
-# Build
+Frontent/node_modules/
+frontend/node_modules/
+Frontent/dist/
+frontend/dist/
 dist/
+
+# Vite / build cache
+Frontent/.vite/
+*.vite/
+
+# ===== Logs =====
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Python / AI =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+Ai/tmp/
+Ai/Analysis/__pycache__/
+
+# ===== Java / Kotlin (backend) =====
+.gradle/
 build/
+target/
+out/
 *.class
-*.jar
-*.war
 
-# Environment
+# ===== Env / secrets =====
 .env
-*.env.local
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+keystore*
+application-local.yml
+application-local.properties
 
-# IDE
+# ===== IDE / OS =====
 .idea/
 .vscode/
 *.iml
-*.swp
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Database
-*.db
-
-
-# Datasets (too large for git, download from Kaggle)
-ai-service/datasets/
-ai-service/models/*.pth
-
-# Python
-ai-service/.venv/
-__pycache__/
-*.pyc
-
-# Java
-backend/target/
-*.jar
-
-# Node
-frontend/node_modules/
-frontend/dist/
-
-# IDE
-.idea/
-.vscode/
-*.iml
-
-# Playwright
-frontend/test-results/
-frontend/playwright-report/
-frontend/.playwright/

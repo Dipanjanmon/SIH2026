@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBot Voice — Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Noto Sans Bengali', sans-serif; }
+  body { background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+  .app { width: 400px; max-width: 100%; background: #1e293b; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .header { background: linear-gradient(135deg, #10b981, #0ea5e9); padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 42px; height: 42px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .header h1 { color: #fff; font-size: 18px; }
+  .header p { color: #e2f5ff; font-size: 12px; }
+  .chat { padding: 20px; height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #0f172a; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+  .user { align-self: flex-end; background: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
+  .bot { align-self: flex-start; background: #334155; color: #f1f5f9; border-bottom-left-radius: 4px; }
+  .bot .badge { font-size: 10px; color: #34d399; display: block; margin-bottom: 4px; }
+  .listening { display: none; align-self: flex-start; background: #334155; padding: 12px 16px; border-radius: 16px; color: #34d399; font-size: 13px; }
+  .mic-zone { text-align: center; padding: 20px; background: #1e293b; }
+  .mic-btn { width: 80px; height: 80px; border-radius: 50%; border: none; background: #10b981; color: #fff; font-size: 30px; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+  .mic-btn.listening { background: #ef4444; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); } 100% { box-shadow: 0 0 0 30px rgba(239,68,68,0); } }
+  .mic-label { margin-top: 12px; color: #94a3b8; font-size: 13px; }
+  .lang-bar { display: flex; gap: 6px; padding: 10px 20px 0; background: #1e293b; justify-content: center; }
+  .lang-bar button { background: #334155; border: none; color: #94a3b8; padding: 6px 16px; border-radius: 12px; cursor: pointer; font-size: 13px; }
+  .lang-bar button.active { background: #10b981; color: #fff; }
+  .note { padding: 10px 20px; background: #1e293b; color: #64748b; font-size: 11px; text-align: center; }
+  .voice-status { font-size: 12px; color: #64748b; text-align: center; margin-top: 8px; min-height: 18px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="avatar">🎤</div>
+    <div>
+      <h1>SmartBot Voice</h1>
+      <p>কথা বলো — Bot তোমাকে শুনে উত্তর দেবে</p>
+    </div>
+  </div>
+
+  <div class="lang-bar">
+    <button id="lang-bn" class="active" onclick="setLang('bn-BN')">বাংলা</button>
+    <button id="lang-hi" onclick="setLang('hi-IN')">हिंदी</button>
+    <button id="lang-en" onclick="setLang('en-IN')">English</button>
+  </div>
+
+  <div class="chat" id="chat"></div>
+  <div class="listening" id="listening">🎙️ শুনছি... কথা বলো</div>
+
+  <div class="mic-zone">
+    <button class="mic-btn" id="mic" onclick="toggleListen()">🎤</button>
+    <div class="mic-label">মাইক বাটনে চাপ দাও, তারপর কথা বলো</div>
+    <div class="voice-status" id="status"></div>
+  </div>
+
+  <div class="note">💡 ডেমো — কথা বলো, Bot voice দিয়ে স্মার্ট উত্তর দেবে</div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const listening = document.getElementById('listening');
+const status = document.getElementById('status');
+const micBtn = document.getElementById('mic');
+let lang = 'bn-BN';
+let isListening = false;
+
+const sampleReplies = {
+  'bn-BN': [
+    { q: /আছো|কেমন|কী খবর/i, t: "একদম ফাইন আছি ভাই। তোমার খবরটা ভালো তো? বলো, আজ কী করে দিতে পারি।", v: "একদম ফাইন আছি ভাই। তোমার খবরটা ভালো তো? বলো, আজ কী করে দিতে পারি।" },
+    { q: /হ্যালো|হাই|শুভ|hello/i, t: "হ্যালো, শুনছি। তোমার জন্য কী করতে পারি? প্রশ্ন জিজ্ঞেস করো, আর শুধু গল্পও করতে পারো, আমি তোমার সাথে আছি।", v: "হ্যালো, শুনছি। তোমার জন্য কী করতে পারি?" },
+    { q: /ধন্যবাদ|thank/i, t: "সবসময়। আর কোনো দরকার হলে একদম বলো, আমি এখানেই আছি। তোমার দিন শুভ হোক।", v: "সবসময়। আর কোনো দরকার হলে একদম বলো, আমি এখানেই আছি।" },
+    { q: /রেসিপি|খাবার|রান্না/i, t: "সহজ রেসিপি: দুটো ডিম, পেঁয়াজ, লঙ্কা নাও। তেলে পেঁয়াজ ভাজো, ডিম ভেঙে দাও, এক মিনিট ভাজা, তারপর গরম গরম খাও।", v: "সহজ রেসিপি: দুটো ডিম, পেঁয়াজ, লঙ্কা নাও। তেলে পেঁয়াজ ভাজো, ডিম ভেঙে দাও, তারপর গরম গরম খাও।" }
+  ],
+  'hi-IN': [
+    { q: /कैसे|क्या हाल|कर रहे/i, t: "मैं एकदम फाइन हूं भाई। आपका क्या हाल है? बताओ आज मैं आपकी क्या मदद करूं?", v: "मैं एकदम फाइन हूं भाई। आपका क्या हाल है? बताओ आज मैं आपकी क्या मदद करूं?" },
+    { q: /नमस्ते|हैलो|हाय/i, t: "नमस्ते दोस्त! मैं मदद के लिए हाज़िर हूं। कोई सवाल पूछो, या बातचीत करो — मैं आपके साथ हूं।", v: "नमस्ते दोस्त! मैं मदद के लिए हाज़िर हूं।" }
+  ],
+  'en-IN': [
+    { q: /how are|whats up|fine/i, t: "I'm doing great! How about you? Tell me, what can I help you with today?", v: "I'm doing great! How about you? Tell me, what can I help you with today?" },
+    { q: /hello|hi|hey/i, t: "Hello! I'm listening. Ask me anything or just have a chat — I'm here for you.", v: "Hello! I'm listening. Ask me anything or just have a chat." }
+  ]
+};
+
+function addMsg(text, who) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  if (who === 'bot') div.innerHTML = '<span class="badge">🎤 SmartBot</span>' + text;
+  else div.textContent = '🎙️ ' + text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById(lang.startsWith('bn') ? 'lang-bn' : lang.startsWith('hi') ? 'lang-hi' : 'lang-en').classList.add('active');
+  speak(lang.startsWith('bn') ? 'ভাষা বদলে গেছে। এখন কথা বলো।' : lang.startsWith('hi') ? 'भाषा बदल गई। अब बोलो।' : 'Language changed. Go ahead and speak.');
+}
+
+function getReply(msg) {
+  const replies = sampleReplies[lang] || [];
+  for (let s of replies) if (s.q.test(msg)) return s;
+  return {
+    t: 'দারুণ প্রশ্ন! তবে এখন আমি ডেমো মোডে আছি। আসল স্মার্ট উত্তর পেতে Gemini API key লাগবে।',
+    v: 'দারুণ প্রশ্ন! তবে এখন আমি ডেমো মোডে আছি।'
+  };
+}
+
+function speak(text) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = 0.95;
+    u.pitch = 1.05;
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(x => x.lang === lang) || voices.find(x => x.lang.startsWith(lang.slice(0,2)));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) { status.textContent = '⚠️ ভয়েস পাওয়া যায়নি'; }
+}
+
+function toggleListen() {
+  if (isListening) { stopListen(); return; }
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    status.textContent = '⚠️ তোমার ব্রাউজার speech support করে না। Chrome/Edge ব্যবহার করো।';
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = lang;
+  rec.continuous = false;
+  rec.interimResults = false;
+  isListening = true;
+  micBtn.classList.add('listening');
+  listening.style.display = 'block';
+  status.textContent = '';
+
+  rec.onresult = e => {
+    const msg = e.results[0][0].transcript;
+    listening.style.display = 'none';
+    addMsg(msg, 'user');
+    setTimeout(() => {
+      const reply = getReply(msg);
+      addMsg(reply.t, 'bot');
+      speak(reply.v);
+    }, 700);
+  };
+  rec.onerror = e => {
+    listening.style.display = 'none';
+    micBtn.classList.remove('listening');
+    isListening = false;
+    status.textContent = e.error === 'not-allowed' ? '⚠️ মাইক permission দাও' : 'শুনতে পারিনি, আবার চেষ্টা করো';
+  };
+  rec.onend = () => {
+    listening.style.display = 'none';
+    micBtn.classList.remove('listening');
+    isListening = false;
+  };
+  rec.start();
+}
+
+function stopListen() {}
+</script>
+</body>
+</html>

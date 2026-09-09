@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBot Human — Natural Voice</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Noto Sans Bengali', sans-serif; }
+  body { background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+  .app { width: 460px; max-width: 100%; background: #1e293b; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .header { background: linear-gradient(135deg, #7c3aed, #db2777); padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 42px; height: 42px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .header h1 { color: #fff; font-size: 17px; }
+  .header p { color: #fce7f3; font-size: 11px; }
+  .tone-bar { display: flex; gap: 8px; padding: 10px 20px 6px; background: #1e293b; justify-content: center; }
+  .tone-btn { background: #334155; border: none; color: #94a3b8; padding: 6px 14px; border-radius: 14px; cursor: pointer; font-size: 12px; }
+  .tone-btn.active { background: #7c3aed; color: #fff; }
+  .voice-bar { display: flex; gap: 16px; padding: 8px 20px 12px; background: #1e293b; border-bottom: 1px solid #334155; justify-content: space-between; }
+  .vc { flex: 1; text-align: center; }
+  .vc label { color: #94a3b8; font-size: 10px; display: block; margin-bottom: 4px; }
+  .vc input { width: 100%; accent-color: #7c3aed; }
+  .vc .val { color: #e2e8f0; font-size: 11px; }
+  .chat { padding: 20px; height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #0f172a; }
+  .msg { max-width: 88%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.65; }
+  .user { align-self: flex-end; background: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
+  .bot { align-self: flex-start; background: #334155; color: #f1f5f9; border-bottom-left-radius: 4px; }
+  .bot .badge { font-size: 10px; color: #a78bfa; display: block; margin-bottom: 4px; }
+  .read-btn { display: inline-block; margin-top: 8px; background: #1e293b; border: 1px solid #475569; color: #38bdf8; padding: 5px 12px; border-radius: 12px; font-size: 12px; cursor: pointer; }
+  .read-btn:hover { background: #0ea5e9; color: #fff; }
+  .read-btn.speaking { background: #ef4444; color: #fff; border-color: #ef4444; }
+  .typing { display: none; align-self: flex-start; background: #334155; padding: 12px 16px; border-radius: 16px; }
+  .typing span { width: 7px; height: 7px; background: #94a3b8; border-radius: 50%; display: inline-block; animation: blink 1.4s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+  .input-bar { display: flex; padding: 12px; background: #1e293b; gap: 8px; border-top: 1px solid #334155; }
+  .input-bar input { flex: 1; padding: 12px 14px; border: none; border-radius: 24px; background: #0f172a; color: #fff; font-size: 14px; outline: none; }
+  .input-bar input::placeholder { color: #64748b; }
+  .input-bar button { background: #7c3aed; color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 18px; cursor: pointer; }
+  .note { padding: 8px 20px; background: #1e293b; color: #64748b; font-size: 11px; text-align: center; border-top: 1px solid #334155; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="avatar">🗣️</div>
+    <div>
+      <h1 id="bot-name">SmartBot — মানুষ গলা</h1>
+      <p>Natural voice • আপনার নিজের speed/pitch</p>
+    </div>
+  </div>
+
+  <div class="tone-bar">
+    <button class="tone-btn" onclick="setTone('male')">🧔 Male (লো গলা)</button>
+    <button class="tone-btn active" onclick="setTone('professional')">💼 Professional</button>
+    <button class="tone-btn" onclick="setTone('female')">👩 Female (উঁচু গলা)</button>
+  </div>
+
+  <div class="voice-bar">
+    <div class="vc">
+      <label>⚡ Speed</label>
+      <input type="range" id="spd" min="0.6" max="1.8" step="0.05" value="1.15" oninput="updVoice(this.value,'speed')">
+      <div class="val" id="spdVal">1.15x</div>
+    </div>
+    <div class="vc">
+      <label>🎵 Pitch (Hz)</label>
+      <input type="range" id="pch" min="-12" max="12" step="1" value="0" oninput="updVoice(this.value,'pitch')">
+      <div class="val" id="pchVal">0 semitone</div>
+    </div>
+  </div>
+
+  <div class="chat" id="chat"></div>
+  <div class="typing" id="typing"><span></span><span></span><span></span></div>
+
+  <div class="input-bar">
+    <input id="input" placeholder="লিখো... / Enter চাপো" autocomplete="off">
+    <button onclick="send()">➤</button>
+  </div>
+
+  <div class="note">🔊 Read চাপলে মানুষের মতো গলায় — আপনার speed/pitch সেটিংয়ে</div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const typing = document.getElementById('typing');
+const input = document.getElementById('input');
+let activeSource = null;
+let currentTone = 'professional';
+let vox = { speed: 1.15, pitch: 0 };
+let audioCtx = null;
+
+const KNOWLEDGE = [
+  {
+    id: "career", match: /ক্যারিয়ার|ক্যারিয়ার|career|কোন কোর্স|কী পড়বো|কি পড়বো|subject|চাকরি|জব|job|profession/i,
+    bn: "দেখো ভাই, ক্যারিয়ার নিয়ে খাটো করাটা আমার কাছে এরকম — প্রথমে নিজেকে ৩টা প্রশ্ন করো: কোন কাজটা তুমি ভালোবাসো? কোনটা করতে পারো? আর কোনটার জন্য মানুষ টাকা দেবে? তিনটার মাঝখানে যে জায়গাটা আছে, সেটাই তোমার। এরপর একটা কথা মনে রাখো — পড়া শেষ করলেই সব শেষ না। নিয়ম করে রোজ ২ ঘণ্টা দক্ষতা শেখো, ৬ মাসেই তুমি দশটা লোকের চেয়ে এগিয়ে থাকবে। আমাকে বলো তো, মন কীসে যাচ্ছে?",
+    hi: "देखो, करियर को लेकर मेरा नजरिया ये है — खुद से 3 सवाल पूछो: कौन सा काम पसंद है? किसमें कुशल हो? किसके लिए लोग पैसे देंगे? इन तीनों के बीच वाली जगह तुम्हारी है। रोज 2 घंटे स्किल पर काम करो, 6 महीने में 10 लोगों से आगे निकल जाओगे। बताओ, तुम्हारा मन किस ओर है?",
+    en: "See, here's how I see career — ask yourself 3 questions: what do you love doing, what are you good at, and what do people pay for? Where those three overlap is your sweet spot. Spend 2 focused hours a day on a skill and in 6 months you'll be ahead of most people. What's pulling you right now?"
+  },
+  {
+    id: "coding", match: /কোড|code|coding|python|জাভা|java|প্রোগ্রাম|ai|মেশিন|লার্নিং|ml|ওয়েব|web|ডেভেলপার|developer/i,
+    bn: "প্রোগ্রামিং শেখা আজকাল সবার সাধ্যের মধ্যে। আমার পরামর্শ? একটা ভাষা বাছো — Python, এটাই এখন জনপ্রিয়। দুই মাস শুধু লজিক আর ডেটা স্ট্রাকচার শেখো, তারপর দেখতে দেখতে ছোটছোট জিনিস বানাতে থাকো — ক্যালকুলেটর, টু-ডু লিস্ট। লেকচার দেখে দেখে শেখা সবচেয়ে বড় ভুল, নিজে হাত দিয়েই শিখতে হয়। ৬ মাসের মাথায় কোন শাখা তুমি নেবে — ওয়েব, অ্যাপ না AI?",
+    hi: "प्रोग्रामिंग अब सबके लिए मुमकिन है। एक भाषा चुनो — Python। 2 महीने लॉजिक और डेटा स्ट्रक्चर, फिर छोटे प्रोजेक्ट बनाओ। वीडियो देखकर नहीं, हाथ लगाकर सीखो। 6 महीने बाद बताओ — वेब, ऐप या AI?",
+    en: "Programming is very accessible now. Pick one language — Python is the smart bet. Spend 2 months on logic + data structures, then start building tiny things. The biggest mistake is learning from videos only — you must write code yourself. After 6 months, tell me which branch you want: web, app, or AI?"
+  },
+  {
+    id: "money", match: /টাকা|টাকার|পয়সা|money|বিনিয়োগ|invest|সেভ|saving|বাজেট|budget|ব্যবসা|business|শেয়ার|share|ক্রিপ্টো|crypto|আয়/i,
+    bn: "আসলে টাকার ব্যাপারটা মাথা ঠান্ডা রেখে করা দরকার। আমার কাছে একটা গোছানো ধারণা আছে — আয় থেকে ৫০% বেশি খরচ করো না, ৩০% ইচ্ছেমতো, আর ২০% সেভ। সবথেকে বড় কথা, আগে জরুরি কোনো কাজের জন্য ৩ থেকে ৬ মাসের খরচ আলাদা রাখো — বিনিয়োগ তার পরে। লম্বা সময়ে index fund-এর মতো জিনিসে টাকা রাখলে ভালো রিটার্ন আসে। আর আয় বাড়াতে চাইলে একটা দক্ষতা গভীরে শেখো। তোমার বয়স আর আয়ের কথা যদি বলো, মোটামুটি একটা ছক এঁকে দিতে পারি।",
+    hi: "पैसे को ठंडे दिमाग से संभालना चाहिए। आय का 50% जरूरत, 30% इच्छा, 20% बचत। पहले 3-6 महीने का इमरजेंसी फंड, फिर निवेश। लंबी अवधि में index fund बेहतर। बताओ तुम्हारी उम्र और आय?",
+    en: "Money needs a cool head. Try the 50/30/20 split — needs, wants, savings. Before investing, build 3-6 months of emergency funds. For the long run, index funds give solid returns. And to earn more, deepen one skill. What's your age and rough income? I could sketch a plan."
+  },
+  {
+    id: "interview", match: /ইন্টারভিউ|interview|সিভি|cv|resume|লিংকডইন|linkedin|নিয়োগ|hire/i,
+    bn: "ইন্টারভিউতে সবাই ঘাবড়ে যায়, কিন্তু জানো কী — এটা আসলে একটা গল্প বলার সুযোগ। তিনটা কিস্তি ভুলো না: কী পরিস্থিতি ছিল, তুমি কী করলে, আর কী ফলল। সংখ্যা দিয়ে বলো — 'বিক্রি ৩০% বেড়েছে' — এমন উদাহরণ সবচেয়ে মনে থাকে। কোম্পানিটা সম্পর্কে আগে ৩০ মিনিট রিসার্চ করো, এতে বুঝবে তুমি গুরুত্ব দিচ্ছো। আর শেষে একটা প্রশ্ন করো — 'আমাকে আর কী প্রমাণ করতে হবে?' — এই লাইনটা সত্যিই আলাদা করে। আমাকে বলো কোন পদের জন্য?",
+    hi: "इंटरव्यू से घबराना मत — ये कहानी सुनाने का मौका है। 3 बातें याद रखो: स्थिति, तुम्हारी कोशिश, नतीजा। नंबर में बताओ। कंपनी के बारे में 30 मिनट रिसर्च करो। आखिर में पूछो — 'मुझे और क्या साबित करना है?' कौन सी पोस्ट है?",
+    en: "Interviews rattle most people, but it's really a story-telling opportunity. Remember three beats: the situation, what you did, and the result — with numbers. 'Sales up 30%' sticks. Research the company for 30 minutes first. At the end ask: 'What more can I prove?' For which role?"
+  },
+  {
+    id: "hello", match: /হ্যালো|হাই|হ্যালো|hello|hi|আসসালামু|শুভ|কেমন|আছো|কি অবস্থা|ki/i,
+    bn: "হ্যালো! বলে কী করবো — আমি তোমার সাথে কথা বলার জন্য এখানে। ক্যারিয়ার, কোডিং, টাকাপয়সা, ইন্টারভিউ, পড়াশোনা, স্বাস্থ্য, মনের কথা — যে বিষয়ে বলো, সরাসরি কথা বলবো। তুমি শুরু করো!",
+    hi: "नमस्ते! मैं यहां आपसे बात करने के लिए हूं। करियर, कोडिंग, पैसा, इंटरव्यू, पढ़ाई, सेहत या दिल की बात — जो चाहो पूछो।",
+    en: "Hey! I'm here to talk like a human would. Career, coding, money, interviews, studies, health, or just how you're feeling — ask away."
+  },
+  {
+    id: "study", match: /পড়া|পড়াশোনা|study|পরীক্ষা|exam|সিলেবাস|মুখস্থ|রিভিশন/i,
+    bn: "মুখস্থ করে পড়ার চেয়ে বোঝার চেষ্টা করো। একটা কৌশল আছে — যা শিখেছ, সেটা নিজে নিজে বলতে চেষ্টা করো যেন কাউকে শেখাচ্ছো। আর রিভিশন চার্ট ঠিক রাখো: ১ দিন পরে, ৩ দিন পরে, ১ সপ্তাহ পরে — এতে মনে থাকবে দীর্ঘদিন। ২৫ মিনিট পড়ো, ৫ মিনিট বিরতি — এভাবে ৪ বার। আর ফোনটা অন্য ঘরে রাখো, এই একটা অভ্যাসই তোমার মেধা দ্বিগুণ করবে।",
+    hi: "रटने से समझना बेहतर है। पढ़कर दूसरों को समझाने की कोशिश करो। रिव्यू करो — 1 दिन, 3 दिन, 1 हफ्ते बाद। 25 मिनट पढ़ो, 5 मिनट ब्रेक। फोन दूसरे कमरे में रखो।",
+    en: "Understanding beats rote memorizing. After reading, try explaining it out loud like you're teaching someone. Review after 1 day, 3 days, 1 week. Work in 25-min focused bursts with 5-min breaks. And keep your phone in another room — one habit, double brainpower."
+  },
+  {
+    id: "health", match: /স্বাস্থ্য|health|ঘুম|sleep|ব্যায়াম|exercise|ডায়েট|diet|ওজন|weight|ফিটনেস|fitness|খাবার/i,
+    bn: "স্বাস্থ্যের কথা যখন ওঠে, আমি ৪টা জিনিস সবার আগে বলি: রাতের ঘুম ৭-৯ ঘণ্টা — এটা যেকোনো সাপ্লিমেন্টের চেয়ে বড়; প্রতিটা খাবারে একটু প্রোটিন আর সবজি রাখো; দিনে ৩০ মিনিট হাঁটা — হেভি জিমের দরকার নেই; আর ২-৩ লিটার জল। সকালে ১৫ মিনিটের হাঁটার অভ্যাস করলে দিনটা পুরো বদলে যায়, বিশ্বাস করো। তুমি কোন দিকে খেয়াল রাখতে চাও?",
+    hi: "सेहत के लिए सबसे जरूरी 4 चीजें: 7-9 घंटे नींद, हर खाने में प्रोटीन+सब्जी, 30 मिनट पैदल चलना, 2-3 लीटर पानी। सुबह 15 मिनट टहलो, दिन बदल जाएगा।",
+    en: "For health I always start with four things: 7-9 hours of sleep (bigger than any supplement), protein + veggies in every meal, 30 minutes of walking a day, and 2-3 liters of water. A 15-minute morning walk genuinely transforms your day. What would you like to focus on?"
+  },
+  {
+    id: "thanks", match: /ধন্যবাদ|thank|শুকরিয়া/i,
+    bn: "আসলে তোমার সাথে কথা বলার আনন্দই আলাদা! আর কোনো প্রশ্ন থাকলে থামো না, আমি আছি তো।",
+    hi: "बात करके अच्छा लगा! और सवाल हो तो बताओ।",
+    en: "It's been a pleasure talking! If something else comes up, I'm right here."
+  }
+];
+
+function detectLang(msg) {
+  if (/[\u0980-\u09FF]/.test(msg)) return 'bn';
+  if (/[\u0900-\u097F]/.test(msg)) return 'hi';
+  return 'en';
+}
+
+function getReply(msg) {
+  const lang = detectLang(msg);
+  for (let k of KNOWLEDGE) if (k.match.test(msg)) return k[lang] || k.bn;
+  return lang === 'bn'
+    ? "হুম, এরপর? আরেকটু খুলে বলো তো — আমি পুরোটা শুনে বুঝে উত্তর দিতে চাই।"
+    : lang === 'hi' ? "हां थोड़ा और बताइए, पूरी बात समझकर जवाब दूंगा।" : "Hmm, go on — tell me a bit more so I fully understand before answering.";
+}
+
+function setTone(t) {
+  currentTone = t;
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tone-btn').forEach(b => { if (b.textContent.includes(t === 'male' ? 'Male' : t === 'female' ? 'Female' : 'Professional')) b.classList.add('active'); });
+  document.getElementById('bot-name').textContent = t === 'male' ? 'SmartBot — মানুষের Male গলা' : t === 'female' ? 'SmartBot — মানুষের Female গলা' : 'SmartBot — মানুষের গলা';
+}
+
+function updVoice(val, which) {
+  if (which === 'speed') { vox.speed = parseFloat(val); document.getElementById('spdVal').textContent = val + 'x'; }
+  else { vox.pitch = parseInt(val); document.getElementById('pchVal').textContent = (val > 0 ? '+' : '') + val + ' semitone'; }
+}
+
+async function speak(text, btn) {
+  if (audioCtx && audioCtx.state === 'running') { audioCtx.close(); }
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  const btnClean = () => { btn.classList.remove('speaking'); btn.textContent = '🔊 Read'; activeSource = null; };
+  if (activeSource) { try { activeSource.stop(); } catch(e){} btnClean(); return; }
+  const lang = detectLang(text);
+  btn.classList.add('speaking');
+  btn.textContent = '⏹️ Stop';
+  try {
+    const url = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodeURIComponent(text) + '&tl=' + lang + '&client=tw-ob';
+    const res = await fetch(url);
+    const buf = await res.arrayBuffer();
+    const decoded = await audioCtx.decodeAudioData(buf);
+    const src = audioCtx.createBufferSource();
+    src.buffer = decoded;
+    src.playbackRate.value = vox.speed;
+    src.detune.value = vox.pitch * 100;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 1.0;
+    src.connect(gain).connect(audioCtx.destination);
+    src.onended = () => btnClean();
+    activeSource = src;
+    src.start();
+  } catch (e) {
+    btnClean();
+    speakLocal(text, btn);
+  }
+}
+
+function speakLocal(text, btn) {
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = detectLang(text) === 'hi' ? 'hi-IN' : detectLang(text) === 'bn' ? 'bn-BD' : 'en-US';
+    u.rate = vox.speed;
+    u.pitch = 1 + vox.pitch / 10;
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(x => x.lang === u.lang) || voices.find(x => x.lang.startsWith(u.lang.slice(0,2)));
+    if (v) u.voice = v;
+    btn.classList.add('speaking');
+    btn.textContent = '⏹️ Stop';
+    u.onend = () => { btn.classList.remove('speaking'); btn.textContent = '🔊 Read'; };
+    speechSynthesis.speak(u);
+  } catch (e) {
+    btn.classList.remove('speaking');
+    btn.textContent = '🔊 Read';
+  }
+}
+
+function addMsg(text, who) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  if (who === 'bot') {
+    div.innerHTML = '<span class="badge">🗣️ SmartBot</span>' + text.replace(/\n/g, '<br>');
+    const btn = document.createElement('button');
+    btn.className = 'read-btn';
+    btn.textContent = '🔊 Read';
+    btn.onclick = () => speak(text, btn);
+    div.appendChild(btn);
+  } else {
+    div.textContent = text;
+  }
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function send() {
+  const msg = input.value.trim();
+  if (!msg) return;
+  addMsg(msg, 'user');
+  input.value = '';
+  typing.style.display = 'block';
+  chat.scrollTop = chat.scrollHeight;
+  setTimeout(() => {
+    typing.style.display = 'none';
+    addMsg(getReply(msg), 'bot');
+  }, 650);
+}
+
+input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+addMsg("হ্যালো! 🙂 আমি এখন তোমার সাথে ঠিক মানুষের মতো করেই কথা বলবো।\n\nনিচের বারে ⚡ Speed আর 🎵 Pitch তোমার পছন্দমতো বদলাও — তারপর 🔊 চাপলেই সেটা গলায় শুনবে। তুমি শুরু করো, কোন কথা বলবে?", 'bot');
+</script>
+</body>
+</html>

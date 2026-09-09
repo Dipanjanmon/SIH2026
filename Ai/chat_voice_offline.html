@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBot Pro — Chat + Neural Voice (Offline)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI','Noto Sans Bengali',sans-serif; }
+  body { background:#0f172a; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px; }
+  .app { width:460px; max-width:100%; background:#1e293b; border-radius:20px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .head { background:linear-gradient(135deg,#7c3aed,#db2777); padding:14px 20px; display:flex; align-items:center; gap:12px; }
+  .avatar { width:42px; height:42px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .head h1 { color:#fff; font-size:17px; }
+  .head p { color:#fce7f3; font-size:11px; }
+  .tonebar { display:flex; gap:8px; padding:10px 20px; background:#1e293b; justify-content:center; border-bottom:1px solid #334155; }
+  .tone-btn { background:#334155; border:none; color:#94a3b8; padding:6px 14px; border-radius:14px; cursor:pointer; font-size:12px; }
+  .tone-btn.active { background:#7c3aed; color:#fff; }
+  .chat { padding:18px; height:400px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; background:#0f172a; }
+  .msg { max-width:88%; padding:10px 14px; border-radius:16px; font-size:14px; line-height:1.6; }
+  .user { align-self:flex-end; background:#2563eb; color:#fff; border-bottom-right-radius:4px; }
+  .bot { align-self:flex-start; background:#334155; color:#f1f5f9; border-bottom-left-radius:4px; }
+  .bot .badge { font-size:10px; color:#a78bfa; display:block; margin-bottom:4px; }
+  .read-btn { display:inline-block; margin-top:8px; background:#1e293b; border:1px solid #475569; color:#38bdf8; padding:5px 12px; border-radius:12px; font-size:12px; cursor:pointer; }
+  .read-btn:hover { background:#0ea5e9; color:#fff; }
+  .read-btn.playing { background:#ef4444; color:#fff; border-color:#ef4444; }
+  .typing { display:none; align-self:flex-start; background:#334155; padding:12px 16px; border-radius:16px; }
+  .typing span { width:7px; height:7px; background:#94a3b8; border-radius:50%; display:inline-block; animation:blink 1.4s infinite; }
+  .typing span:nth-child(2){ animation-delay:.2s; } .typing span:nth-child(3){ animation-delay:.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.2;} 40%{opacity:1;} }
+  .inputbar { display:flex; padding:12px; background:#1e293b; gap:8px; border-top:1px solid #334155; }
+  .inputbar input { flex:1; padding:12px 14px; border:none; border-radius:24px; background:#0f172a; color:#fff; font-size:14px; outline:none; }
+  .inputbar input::placeholder{ color:#64748b; }
+  .inputbar button { background:#7c3aed; color:#fff; border:none; border-radius:50%; width:44px; height:44px; font-size:18px; cursor:pointer; }
+  .controls { display:flex; gap:14px; padding:10px 20px; background:#1e293b; border-top:1px solid #334155; }
+  .controls div { flex:1; text-align:center; }
+  .controls small { color:#94a3b8; font-size:10px; display:block; }
+  .controls input { width:100%; accent-color:#7c3aed; }
+  .note { padding:8px 20px; background:#1e293b; color:#64748b; font-size:11px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="head">
+    <div class="avatar">🤖</div>
+    <div>
+      <h1>SmartBot Pro</h1>
+      <p>Chat + Neural Voice • 100% অফলাইন</p>
+    </div>
+  </div>
+
+  <div class="tonebar">
+    <button class="tone-btn active" onclick="setTone('male')">🧔 Male</button>
+    <button class="tone-btn" onclick="setTone('female')">👩 Female</button>
+  </div>
+
+  <div class="chat" id="chat"></div>
+  <div class="typing" id="typing"><span></span><span></span><span></span></div>
+
+  <div class="inputbar">
+    <input id="inp" placeholder="লিখো... (বাংলা / हिंदी / English)" autocomplete="off">
+    <button onclick="send()">➤</button>
+  </div>
+
+  <div class="controls">
+    <div><small>⚡ Speed</small><input type="range" id="spd" min="0.7" max="1.5" step="0.05" value="1.0"></div>
+    <div><small>🎵 Pitch</small><input type="range" id="pch" min="-0.3" max="0.3" step="0.05" value="0"></div>
+  </div>
+
+  <div class="note">🔊 প্রতিটা উত্তরে Read — ডাউনলোড করা neural voice-এ শুনবে</div>
+</div>
+
+<script>
+const chat=document.getElementById('chat'), typing=document.getElementById('typing'), inp=document.getElementById('inp');
+let tone='male', curBtn=null, curAudio=null;
+
+const VOICE = {
+  male: { bn:'voices/male_bn.mp3', hi:'voices/male_hi.mp3', en:'voices/male_en.mp3', ur:'voices/male_hi.mp3' },
+  female:{ bn:'voices/female_bn.mp3', hi:'voices/female_hi.mp3', en:'voices/female_en.mp3', ur:'voices/female_hi.mp3' }
+};
+
+const KB = [
+  { m:/ক্যারিয়ার|ক্যারিয়ার|career|চাকরি|জব|job|course|কোর্স|পড়বো|পড়ি|chakri|job|career|kon|course|ki\s*podbo|porbo/i,
+    bn:"দেখো, ক্যারিয়ার নিয়ে আসল কথা হলো — তিনটে প্রশ্ন নিজেকে করো: কোনটা ভালোবাসো? কোনটায় পারদর্শী? আর কোনটার জন্য মানুষ টাকা দেবে? এই তিনের মাঝের জায়গাটাই তোমার। রোজ ২ ঘণ্টা দক্ষতা শেখো, ৬ মাসেই এগিয়ে যাবে। বলো, মন কোন দিকে যাচ্ছে?",
+    hi:"देखो, करियर के लिए 3 सवाल खुद से पूछो: क्या पसंद है? किसमें कुशल हो? किसके लिए पैसे मिलेंगे? तीनों के बीच की जगह तुम्हारी है। रोज 2 घंटे स्किल पर काम करो।",
+    en:"For career, ask yourself three things: what you love, what you're good at, and what people pay for. Your sweet spot is the overlap. Spend 2 focused hours daily on a skill and you'll pull ahead in months." },
+  { m:/কোড|code|python|python|জাভা|java|program|প্রগ্রাম|ওয়েব|web|ডেভেলপ|developer|ai|মেশিন|learning|shikha|programming|coding/i,
+    bn:"প্রোগ্রামিংয়ে সবচেয়ে বড় ভুল হলো শুধু ভিডিও দেখা। একটা ভাষা বাছো — Python এখন সেরা — ২ মাস লজিক শেখো, তারপর নিজে ছোট জিনিস বানাও। হাতেকলমেই সত্যিকারের শেখা। ৬ মাস পরে ওয়েব, অ্যাপ নাকি AI — কোন দিকে যাবে?",
+    hi:"प्रोग्रामिंग में सबसे बड़ी गलती है सिर्फ वीडियो देखना। एक भाषा चुनो — Python। 2 महीने लॉजिक, फिर खुद प्रोजेक्ट बनाओ। हाथ से ही सीखते हैं।",
+    en:"The biggest mistake in coding is only watching videos. Pick one language — Python is the smart start — 2 months of logic, then build small things yourself. Real skill comes from doing. Web, app, or AI later?" },
+  { m:/টাকা|পয়সা|money|টিন নেই|বিনিয়োগ|invest|সেভ|save|bazar|ব্যবসা|business|আয়|income|শেয়ার|share|taka|poysa|biniog|moni|payment/i,
+    bn:"টাকার কথা মাথা ঠান্ডা করে। মোট আয়ের ৫০% বেশি খরচ নয়, ২০% সেভ। প্রথমে ৩–৬ মাসের জরুরি ফান্ড, তারপর বিনিয়োগ। লম্বা সময়ে index fund-এ ভালো রিটার্ন। আর আয় বাড়াতে একটা দক্ষতাকে আরও গভীরে শেখো। ভালো হবে?",
+    hi:"पैसा ठंडे दिमाग से। आय का 50% खर्च नहीं, 20% बचत। पहले इमरजेंसी फंड, फिर निवेश। लंबे समय में index fund बेहतर। स्किल गहरी करो।",
+    en:"Money needs a cool head. Don't spend over 50% of income, save 20%. Build 3-6 months of emergency funds before investing. Long-term, index funds win. And deepen one skill to earn more." },
+  { m:/ইন্টারভিউ|interview|সিভি|cv|resume|লিংকডইন|linkedin|নিয়োগ|hire/i,
+    bn:"ইন্টারভিউ মনে হয় ভয়ে ভরা, আসলে এটা গল্প বলার সুযোগ। কিস্তি তিনটে: পরিস্থিতি কী ছিল, তুমি কী করলে, ফল কী — সংখ্যা দিয়ে বলো। কোম্পানির কথা ৩০ মিনিট রিসার্চ করো। শেষে প্রশ্ন করো: 'আমাকে আর কী প্রমাণ করতে হবে?' এটাই আলাদা করে।",
+    hi:"इंटरव्यू यानी कहानी सुनाना। तीन: स्थिति, तुम्हारी कोशिश, नतीजा — नंबर से। कंपनी रिसर्च करो। आखिर में पूछो: 'मुझे और क्या साबित करना है?'",
+    en:"Interviews are really story-telling. Three beats: the situation, what you did, and the result — with numbers. Do 30 min of company research. Close by asking: 'What more can I prove?'" },
+  { m:/পড়া|পড়াশোনা|study|পরীক্ষা|exam|রিভিশন|মুখস্থ|সিলেবাস/i,
+    bn:"মুখস্থ নয়, বোঝার চেষ্টা। যা পড়ো, নিজে নিজে ভাবো যেন কাউকে শেখাচ্ছো। রিভিশন ১ দিন, ৩ দিন, ১ সপ্তাহের ফাঁকে। ২৫ মিনিট পড়ো, ৫ মিনিট বিরতি। আর ফোন অন্য ঘরে — এক এসবে কি বদলে যায়!",
+    hi:"रटो मत, समझो। दूसरे को समझाते वक्त खुद समझ आता है। रिव्यू 1 दिन, 3 दिन, 1 हफ्ते। 25 मिनट पढ़ो, 5 मिनट ब्रेक। फोन दूर रखो।",
+    en:"Understand, don't memorize. Teach it out loud to someone imaginary. Review after 1, 3, 7 days. Work in 25-min bursts, 5-min breaks. Keep phone away — one habit changes everything." },
+  { m:/স্বাস্থ্য|health|ঘুম|sleep|ব্যায়াম|exercise|ডায়েট|diet|ওজন|weight|ফিটনেস|fitness/i,
+    bn:"স্বাস্থ্যের ভিত্তি ৪টা: ৭–৯ ঘণ্টা ঘুম, প্রতিটা খাবারে সামান্য প্রোটিন আর সবজি, ৩০ মিনিট হাঁটা আর ২–৩ লিটার জল। সকালে ১৫ মিনিট হাঁটলে দিন বদলে যায়। কোন দিকে খেয়াল দিতে চাও?",
+    hi:"सेहत की बुनियाद: 7-9 घंटे नींद, हर खाने में प्रोटीन+सब्जी, 30 मिनट चलना, 2-3 लीटर पानी। सुबह 15 मिनट टहलो।",
+    en:"Health basics: 7-9h sleep, protein + veggies at every meal, 30 min walking, 2-3L water. A 15-min morning walk changes your day." },
+  { m:/ভয়|টেনশন|চাপ|স্ট্রেস|stress|মন|উদাস|হতাশ|উদ্বেগ|রাগ|দুশ্চিন্তা|anxiety|মানসিক/i,
+    bn:"চিন্তা আসলে অ্যালার্ম, বাস্তব বিপদ না। টেনশনে ৫টা জিনিস চোখে দেখো, ৪টা শোনো, ৩টা স্পর্শ করো — ৬০ সেকেন্ডে মন ঠান্ডা। ১০ মিনিট লেখো যেটা ভাবছো। আর ছোট একটা অ্যাকশন নাও — চিন্তায় থেমে না থেকে। দিন কেটে যাবে।",
+    hi:"चिंता अलार्म है, हकीकत नहीं। टेंशन में 5-4-3-2-1 grounding करो। 10 मिनट लिखो। छोटा एक्शन लो, सोच के साथ रुको मत।",
+    en:"Thoughts are alarms, not reality. In stress, try 5-4-3-2-1 grounding, then journal for 10 minutes. Take one small action instead of overthinking." },
+  { m:/হ্যালো|হাই|হ্যালো|hello|hi|শুভ|কেমন|আছো|কি অবস্থা|ki|kemon|obostha|korcho|bolo/i,
+    bn:"হ্যালো! আমি এখানে তোমার সাথে সত্যিকারের মানুষের মতোই কথা বলবো। ক্যারিয়ার, কোডিং, টাকাপয়সা, ইন্টারভিউ, পড়া, স্বাস্থ্য, মন — যে বিষয় খুশি শুরু করো!",
+    hi:"नमस्ते! मैं इंसान की तरह बात करता हूं। करियर, कोडिंग, पैसा, इंटरव्यू, पढ़ाई, सेहत या दिल — जो चाहो पूछो।",
+    en:"Hey! I talk just like a human. Career, coding, money, interviews, studies, health, or how you feel — pick any." },
+  { m:/ধন্যবাদ|thank|শুকরিয়া/i,
+    bn:"ধন্যবাদ! আরও প্রশ্ন করবে বলেই আশা। আমি এখানেই আছি।",
+    hi:"धन्यवाद! और सवाल पूछो, मैं यहीं हूं।",
+    en:"Thank you! Ask me anything else — I'm right here." }
+];
+
+function guessLang(t){
+  // Script detection
+  for(const c of t){const p=c.codePointAt(0); if(p>=0x0980&&p<=0x09FF)return'bn'; if(p>=0x0900&&p<=0x097F)return'hi'; if(p>=0x0600&&p<=0x06FF)return'ur';}
+  const w = t.toLowerCase();
+  // Banglish keywords
+  const bn = /\b(kemon|obostha|korcho|bolo|valo|bhalo|dhonyobad|ami|tumi|apni|kotha|chakri|tokar|poysa|mon|vai|bhai|korte|lagbe|korbo|koro|likhi|likhte|hobe|acha|thik|ache|ase|sobar|ki|na|ar)\b/;
+  // Hinglish keywords
+  const hi = /\b(main|tum|kaise|kya|hai|kaam|chahiye|naam|acha|badiya|shukriya|bolo|batao|madad|sawal|sabse|apna|apni|kuch|karo|karne|hoga|tha|hum|aap|kaun|kyun|kab)\b/;
+  const bnl = (w.match(bn)||[]).length;
+  const hil = (w.match(hi)||[]).length;
+  if(bnl>0 && bnl>=hil) return 'bn';
+  if(hil>0) return 'hi';
+  return 'en';
+}
+
+function getReply(msg){
+  const lang=guessLang(msg);
+  for(const k of KB){ if(k.m.test(msg)) return {text:k[lang]||k.bn, lang}; }
+  // Smart offline fallback: recognize question intent keywords
+  const w = msg.toLowerCase();
+  const defs = [
+    { re:/\?/, t: lang==='bn' ? "ভালো প্রশ্ন! আরেকটু খোলসা করে বলো — ক্যারিয়ার, কোডিং, টাকা, ইন্টারভিউ, পড়া নাকি স্বাস্থ্য — কোনটা?" : lang==='hi' ? "अच्छा सवाल! थोड़ा और साफ़ बताओ — करियर, कोडिंग, पैसा, इंटरव्यू, पढ़ाई या सेहत?" : "Good question! Could you be a bit more specific — career, coding, money, interview, study, or health?" },
+    { re:/কী|কি|কোন|how|what|which|why|kaise|kya|ki\b/, t: lang==='bn' ? "বলো, ঠিক কোন বিষয়ে জানতে চাও? আমি ক্যারিয়ার, কোডিং, টাকা, ইন্টারভিউ, পড়াশোনা আর মানসিক স্বাস্থ্য — সবেতেই সাহায্য করতে পারি।" : lang==='hi' ? "बताओ किस विषय में? करियर, कोडिंग, पैसा, इंटरव्यू, पढ़ाई या मानसिक सेहत — सबमें मदद कर सकता हूं।" : "Tell me the topic — career, coding, money, interview, study, or mental health — I can help with all." }
+  ];
+  for(const d of defs){ if(d.re.test(w)) return {text:d.t, lang}; }
+  return {text: lang==='bn' ? "হুম, আরেকটু খুলে বলো — পূর্ণটা শুনে উত্তর দিতে চাই।" : lang==='hi' ? "हां, थोड़ा और बताइए।" : "Hmm, tell me a bit more so I can help properly.", lang};
+}
+
+async function getSmartReply(msg){
+  // AI (OpenRouter/Gemini) via server — no hardcoded KB
+  let data = null;
+  try {
+    const res = await fetch('http://localhost:5000/chat?q='+encodeURIComponent(msg)+'&tone='+tone, {signal: AbortSignal.timeout(20000)});
+    if(res.ok) data = await res.json();
+  } catch(e){ data = null; }
+  if(data && data.reply){
+    return { text: data.reply, lang: data.lang || guessLang(msg) };
+  }
+  // Server unreachable or AI failed — show clear message, never fake KB answer
+  const L = guessLang(msg);
+  const msgOffline = L==='bn'
+    ? "⚠️ এখন AI-তে connect হয়নি। নিশ্চিত করো `main.py` বা `start_smartbot.bat` চালিয়ে server চালু আছে, তারপর আবার চেষ্টা করো।"
+    : L==='hi'
+    ? "⚠️ अभी AI से कनेक्ट नहीं हुआ। सुनिश्चित करें कि सर्वर चल रहा है (main.py / start_smartbot.bat), फिर दोबारा कोशिश करें।"
+    : "⚠️ Couldn't reach the AI. Make sure the server is running (main.py or start_smartbot.bat), then try again.";
+  return { text: msgOffline, lang: L };
+}
+
+function setTone(t){ tone=t; document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tone-btn').forEach(b=>{ if(b.textContent.includes(t==='male'?'Male':'Female')) b.classList.add('active'); }); }
+
+function speak(text, btn, lang){
+  const wasPlaying = (btn === curBtn);
+  if(curAudio){ curAudio.pause(); curAudio=null; }
+  if(curBtn){ curBtn.classList.remove('playing'); curBtn.textContent = curBtn.dataset.lbl || '🔊 Read'; curBtn=null; }
+  if(wasPlaying){ return; }
+  const spd=parseFloat(document.getElementById('spd').value);
+  const pch=parseFloat(document.getElementById('pch').value);
+  const tryServer = () => {
+    fetch('http://localhost:5000/speak?q='+encodeURIComponent(text)+'&tone='+tone, {signal: AbortSignal.timeout(8000)})
+      .then(r => { if(!r.ok) throw new Error('http'); return r.arrayBuffer(); })
+      .then(buf => {
+        const blob = new Blob([buf], {type:'audio/mpeg'});
+        const url = URL.createObjectURL(blob);
+        const a = new Audio(url);
+        a.playbackRate = spd; a.preservesPitch = false;
+        a.onended = () => { btn.classList.remove('playing'); btn.textContent='🔊 Read'; curAudio=null; curBtn=null; URL.revokeObjectURL(url); };
+        a.onerror = () => fallback();
+        a.play().catch(() => fallback());
+        curAudio=a; curBtn=btn; btn.dataset.lbl='🔊 Read'; btn.classList.add('playing'); btn.textContent='⏹️ Stop';
+      })
+      .catch(() => fallback());
+  };
+  const fallback = () => {
+    const a = new Audio(VOICE[tone][lang]);
+    a.playbackRate = spd; a.preservesPitch = false;
+    a.onended = () => { btn.classList.remove('playing'); btn.textContent='🔊 Read'; curAudio=null; curBtn=null; };
+    a.onerror = () => synth();
+    a.play().catch(() => synth());
+    curAudio=a; curBtn=btn; btn.classList.add('playing'); btn.textContent='⏹️ Stop';
+  };
+  const synth = () => {
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang==='bn' ? 'bn-BD' : lang==='hi' ? 'hi-IN' : 'en-IN';
+      u.rate = spd; u.pitch = 1 + pch;
+      const v = speechSynthesis.getVoices().find(x => x.lang === u.lang);
+      if(v) u.voice = v;
+      btn.classList.add('playing'); btn.textContent='⏹️ Stop';
+      u.onend = () => { btn.classList.remove('playing'); btn.textContent='🔊 Read'; curAudio=null; curBtn=null; };
+      speechSynthesis.speak(u);
+    } catch(e) { btn.classList.remove('playing'); btn.textContent='🔊 Read'; }
+  };
+  tryServer();
+}
+
+function addMsg(text,who,lang){
+  const div=document.createElement('div'); div.className='msg '+who;
+  if(who==='bot'){
+    div.innerHTML='<span class="badge">🎗️ SmartBot · '+tone+'</span>'+text;
+    const b=document.createElement('button'); b.className='read-btn'; b.textContent='🔊 Read';
+    b.onclick=()=>speak(text,b,lang); div.appendChild(b);
+  } else div.textContent=text;
+  chat.appendChild(div); chat.scrollTop=chat.scrollHeight;
+}
+
+async function send(){
+  const m=inp.value.trim(); if(!m)return;
+  const lang=guessLang(m);
+  addMsg(m,'user');
+  inp.value=''; typing.style.display='block'; chat.scrollTop=chat.scrollHeight;
+  const r=await getSmartReply(m);
+  typing.style.display='none';
+  addMsg(r.text,'bot',r.lang||lang);
+}
+inp.addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
+addMsg("হ্যালো! 🙂 আমি এখন পুরো অফলাইন — টাইপ করো, উত্তর আসবে। প্রতিটা উত্তরে 🔊 Read — ডাউনলোড করা neural voice-এ শুনবে।","bot","bn");
+</script>
+</body>
+</html>
