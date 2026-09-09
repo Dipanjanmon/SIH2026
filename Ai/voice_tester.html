@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartVoice Tester — Downloaded Neural Voice</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI','Noto Sans Bengali',sans-serif; }
+  body { background:#0f172a; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px; color:#e2e8f0; }
+  .box { width:560px; max-width:100%; background:#1e293b; border-radius:20px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .head { background:linear-gradient(135deg,#7c3aed,#db2777); padding:16px 20px; }
+  .head h1 { color:#fff; font-size:18px; }
+  .head p { color:#fce7f3; font-size:12px; }
+  .body { padding:20px; }
+  label { font-size:12px; color:#94a3b8; display:block; margin:12px 0 6px; }
+  textarea, select, input { width:100%; padding:12px; border:none; border-radius:12px; background:#0f172a; color:#fff; font-size:14px; }
+  select option { background:#1e293b; }
+  .row { display:flex; gap:10px; }
+  select { flex:1; }
+  .btn-row { display:flex; gap:10px; margin-top:14px; }
+  .btn { flex:1; padding:12px; border:none; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer; }
+  .speak { background:#7c3aed; color:#fff; }
+  .stop { background:#ef4444; color:#fff; }
+  .status { margin-top:12px; font-size:12px; color:#34d399; text-align:center; min-height:18px; }
+  .sliders { display:flex; gap:16px; margin-top:12px; }
+  .sl { flex:1; }
+  .sl small { color:#94a3b8; font-size:11px; }
+  .sl input { width:100%; accent-color:#7c3aed; padding:0; }
+  .files { margin-top:14px; background:#0f172a; border-radius:12px; padding:12px; font-size:12px; color:#94a3b8; }
+  .files b { color:#38bdf8; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="head">
+    <h1>🗣️ SmartVoice — ডাউনলোড করা neural voice</h1>
+    <p>Microsoft Neural Voice • অফলাইন-রি‌ডি • speed/pitch control</p>
+  </div>
+  <div class="body">
+    <label>১) টেক্সট লিখো (বাংলা / हिंदी / English)</label>
+    <textarea id="txt" rows="3">শোনো ভাই, আমি এখন মানুষের মতো কথা বলি। কোন দিকে সাহায্য লাগবে, সোজা বলো!</textarea>
+
+    <label>২) টোন ও ভাষা বাছো</label>
+    <div class="row">
+      <select id="tone">
+        <option value="male">🧔 Male — বশ্‌কর (Bengali) / Madhur (Hindi)</option>
+        <option value="female">👩 Female — তানিশা (Bengali) / Swara (Hindi)</option>
+      </select>
+    </div>
+
+    <div class="sliders">
+      <div class="sl">
+        <small>⚡ Speed</small>
+        <input type="range" id="spd" min="0.6" max="1.8" step="0.05" value="1.1">
+      </div>
+      <div class="sl">
+        <small>🎵 Pitch</small>
+        <input type="range" id="pch" min="-6" max="6" step="1" value="0">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn speak" onclick="speakIt()">🔊 Smart Voice শোনো</button>
+      <button class="btn stop" onclick="stopIt()">⏹️ Stop</button>
+    </div>
+    <div class="status" id="status"></div>
+
+    <div class="files">
+      <b>✓ ৬টা neural voice ডাউনলোড হয়েছে (AI\voices\):</b><br>
+      🧔 male_bn.mp3 • male_hi.mp3 • male_en.mp3<br>
+      👩 female_bn.mp3 • female_hi.mp3 • female_en.mp3<br>
+      ওয়েব UI: <b>chat_read_demo.html</b> (টেক্সট + Read) • <b>voice_human_demo.html</b> (ভয়েস চ্যাট)
+    </div>
+  </div>
+</div>
+
+<script>
+let ctx, lastUrl = null;
+
+function guessLang(t) {
+  for (let c of t) { const cp = c.codePointAt(0);
+    if (cp >= 0x0980 && cp <= 0x09FF) return 'bn';
+    if (cp >= 0x0900 && cp <= 0x097F) return 'hi'; }
+  return 'en';
+}
+
+async function speakIt() {
+  const text = document.getElementById('txt').value.trim();
+  const tone = document.getElementById('tone').value;
+  const spd = parseFloat(document.getElementById('spd').value);
+  const pch = parseInt(document.getElementById('pch').value);
+  const st = document.getElementById('status');
+  if (!text) { st.textContent = '⚠️ টেক্সট লেখো'; return; }
+
+  st.textContent = '⏳ সার্ভার /speak থেকে neural voice নিচ্ছি...';
+  const url = `http://localhost:5000/speak?q=${encodeURIComponent(text)}&tone=${tone}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const buf = await res.arrayBuffer();
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    const dec = await ctx.decodeAudioData(buf);
+    if (lastUrl) { try { lastUrl.stop(); } catch(e){} }
+    const src = ctx.createBufferSource();
+    src.buffer = dec;
+    src.playbackRate.value = spd;
+    src.detune.value = pch * 100;
+    const g = ctx.createGain(); g.gain.value = 1;
+    src.connect(g).connect(ctx.destination);
+    lastUrl = src;
+    src.onended = () => { st.textContent = '✅ শোনা শেষ'; };
+    src.start();
+    st.textContent = `🗣️ কথা বলা হচ্ছে — ${tone === 'male' ? 'Male' : 'Female'} • ${guessLang(text)} • speed ${spd}x • pitch ${pch}`;
+  } catch (e) {
+    st.textContent = '⚠️ সার্ভার চালু নেই? `cd AI; python server.py` run করো. কী হলো: ' + e.message;
+  }
+}
+
+function stopIt() { if (lastUrl) { try { lastUrl.stop(); } catch(e){} lastUrl=null; } document.getElementById('status').textContent='⏹️ থামানো হলো'; }
+</script>
+</body>
+</html>

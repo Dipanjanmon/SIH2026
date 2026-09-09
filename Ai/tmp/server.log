@@ -1,0 +1,4 @@
+[analyzer] SpeciesNet loaded in 2.6s
+INFO:     127.0.0.1:61153 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59144 - "POST /api/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59121 - "POST /api/analyze HTTP/1.1" 200 OK

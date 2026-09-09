@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBot Pro — Professional AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Noto Sans Bengali', sans-serif; }
+  body { background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+  .app { width: 460px; max-width: 100%; background: #1e293b; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .header { background: linear-gradient(135deg, #4f46e5, #0ea5e9); padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 42px; height: 42px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .header h1 { color: #fff; font-size: 18px; }
+  .header p { color: #dbeafe; font-size: 12px; }
+  .pro-bar { display: flex; gap: 8px; padding: 10px 20px; background: #1e293b; justify-content: center; border-bottom: 1px solid #334155; }
+  .pro-btn { background: #334155; border: none; color: #94a3b8; padding: 7px 16px; border-radius: 14px; cursor: pointer; font-size: 13px; }
+  .pro-btn.active { background: #4f46e5; color: #fff; }
+  .chat { padding: 20px; height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #0f172a; }
+  .msg { max-width: 88%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.6; }
+  .user { align-self: flex-end; background: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
+  .bot { align-self: flex-start; background: #334155; color: #f1f5f9; border-bottom-left-radius: 4px; }
+  .bot .badge { font-size: 10px; color: #818cf8; display: block; margin-bottom: 4px; }
+  .read-btn { display: inline-block; margin-top: 8px; background: #1e293b; border: 1px solid #475569; color: #38bdf8; padding: 5px 12px; border-radius: 12px; font-size: 12px; cursor: pointer; }
+  .read-btn:hover { background: #0ea5e9; color: #fff; }
+  .read-btn.speaking { background: #ef4444; color: #fff; border-color: #ef4444; }
+  .typing { display: none; align-self: flex-start; background: #334155; padding: 12px 16px; border-radius: 16px; }
+  .typing span { width: 7px; height: 7px; background: #94a3b8; border-radius: 50%; display: inline-block; animation: blink 1.4s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+  .input-bar { display: flex; padding: 12px; background: #1e293b; gap: 8px; border-top: 1px solid #334155; }
+  .input-bar input { flex: 1; padding: 12px 14px; border: none; border-radius: 24px; background: #0f172a; color: #fff; font-size: 14px; outline: none; }
+  .input-bar input::placeholder { color: #64748b; }
+  .input-bar button { background: #4f46e5; color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 18px; cursor: pointer; }
+  .demo-tags { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px 0; background: #1e293b; }
+  .demo-tags span { background: #334155; color: #94a3b8; padding: 5px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; }
+  .demo-tags span:hover { background: #475569; color: #fff; }
+  .note { padding: 10px 20px; background: #1e293b; color: #64748b; font-size: 11px; text-align: center; border-top: 1px solid #334155; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="avatar">🧠</div>
+    <div>
+      <h1 id="bot-name">SmartBot Pro</h1>
+      <p>প্রফেশনাল এডভাইজার • বাংলা हिंदी English</p>
+    </div>
+  </div>
+
+  <div class="pro-bar">
+    <button class="pro-btn" onclick="setTone('neutral')">💼 Professional</button>
+    <button class="pro-btn active" onclick="setTone('male')">🧔 Male Tone</button>
+    <button class="pro-btn" onclick="setTone('female')">👩 Female Tone</button>
+  </div>
+
+  <div class="demo-tags">
+    <span>"ক্যারিয়ার গাইডেন্স"</span>
+    <span>"কোডিং শেখার রোডম্যাপ"</span>
+    <span>"টাকার বুদ্ধি / ব্যবসা"</span>
+    <span>"চাকরি ইন্টারভিউ"</span>
+  </div>
+
+  <div class="chat" id="chat"></div>
+  <div class="typing" id="typing"><span></span><span></span><span></span></div>
+
+  <div class="input-bar">
+    <input id="input" placeholder="প্রশ্ন লিখো — যেকোনো বিষয় ইংরেজি/বাংলা/হিন্দিতে..." autocomplete="off">
+    <button onclick="send()">➤</button>
+  </div>
+
+  <div class="note">🧠 ইন্টেলিজেন্ট এনজিন — বিষয় বুঝে প্রফেশনাল উত্তর • 🔊 Read</div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const typing = document.getElementById('typing');
+const input = document.getElementById('input');
+let activeSpeak = null;
+let currentTone = 'male';
+
+const STYLE = {
+  neutral: { name: "SmartBot Pro", verdict: "মূল বিশ্লেষণ", wrap: (a) => a },
+  male: { name: "SmartBot Pro", verdict: "মূল বিশ্লেষণ", wrap: (a) => a },
+  female: { name: "SmartBot Pro", verdict: "মূল বিশ্লেষণ", wrap: (a) => a }
+};
+
+const KNOWLEDGE = [
+  {
+    id: "career", match: /ক্যারিয়ার|ক্যারিয়ার|career|counseling|কাউন্সেলিং|কী পড়বো|কি পড়বো|কোন কোর্স|কোন সাবজেক্ট|subject|চাকরি|জব|job|profession|পেশা/i,
+    bn: "📊 ক্যারিয়ার পরিকল্পনার স্ট্রাকচার্ড পদ্ধতি:\n\n১. **সুইট স্পট খুঁজো** (IKIGAI): যা ভালোবাসো × যাতে দক্ষ × যেটার বাজার আছে\n২. **SKILL GAP অ্যানালাইসিস**: আজকের talent-কে টার্গেট job-এর দরকারের সাথে মেলাও\n৩. **৬ মাসের রোডম্যাপ**: মাস ১-২ ভিত্তি, ৩-৪ প্র্যাকটিস প্রজেক্ট, ৫-৬ পোর্টফোলিও\n৪. **ইন্ডাস্ট্রি ট্রেন্ড ২০২৬**: AI-প্রুফ দক্ষতা = সমস্যা-সমাধান, কমিউনিকেশন, ডেটা\n\n💡 প্রো টিপ: প্রতিদিন ২ ঘণ্টা skill-building-এ দিলে ৬ মাসেই ১০০+ ঘণ্টা হয়ে যায় — সেটাই মূলধন।\n\nবলো তো কোন ইন্ডাস্ট্রিতে আগ্রহী — স্পেসিফিক রোডম্যাপ দিয়ে দেবো।",
+    hi: "📊 करियर प्लानिंग का स्ट्रक्चर्ड तरीका:\n\n1. अपना IKIGAI ढूंढो — जो पसंद है × जिसमें कुशल हो × जिसका बाजार है\n2. SKILL GAP विश्लेषण — अपने हुनर को टारगेट नौकरी से मिलाओ\n3. 6 महीने का रोडमैप — महीना 1-2 बुनियाद, 3-4 प्रोजेक्ट, 5-6 पोर्टफोलियो\n4. 2026 का ट्रेंड — AI-प्रूफ स्किल्स: समस्या-समाधान, संचार, डेटा",
+    en: "📊 Career planning — a structured approach:\n\n1. Find your IKIGAI: what you love × what you're good at × what pays\n2. Do a skill-gap analysis against your target role\n3. Plan a 6-month roadmap: months 1-2 foundation, 3-4 projects, 5-6 portfolio\n4. 2026 trend: AI-proof skills = problem-solving, communication, data literacy\n\nTell me your target industry and I'll give a specific path."
+  },
+  {
+    id: "coding", match: /কোড|coding|programming|প্রোগ্রাম|প্রোগ্রামিং|python|জাভা|java|এআই|ai শিখ|ml|মেশিন|ডেভেলপার|developer|বাট|web/i,
+    bn: "💻 প্রোগ্রামিং শেখার রোডম্যাপ (২০২৬):\n\n১. **ভিত্তি (মাস ১-২)**: একটি ভাষা — Python (সেরা) বা JavaScript। منطق + ডেটা স্ট্রাকচার\n২. **হ্যান্ডস-অন (মাস ৩-৪)**: ছোট প্রকল্প — ক্যালকুলেটর, টু-ডু অ্যাপ, ওয়েব পেজ\n৩. **ডোমেইন (মাস ৫-৬)**: একটি শাখা বাছো — ওয়েব / অ্যাপ / AI / ডেটা\n৪. **প্রফেশনাল**: GitHub + পোর্টফোলিও + প্রতিদিন ১ সমস্যা (LeetCode/HackerRank)\n\n💡 প্রো টিপ: টিউটোরিয়াল দেখে নয়, কোড লিখে শেখো। ৮০% প্রোগ্রেস আসে ২০% হাতেকলমে কাজ থেকে।\n\nকোন শাখায় যেতে চাও — ওয়েব, অ্যাপ নাকি AI? সেই অনুযায়ী নেক্সট স্টেপ বলবো।",
+    hi: "💻 प्रोग्रामिंग रोडमैप (2026):\n\n1. बुनियाद (महीना 1-2): एक भाषा — Python या JavaScript\n2. अभ्यास (महीना 3-4): छोटे प्रोजेक्ट — कैलकुलेटर, टू-डू ऐप\n3. डोमेन (महीना 5-6): एक शाखा चुनो — वेब/ऐप/AI/डेटा\n4. प्रोफेशनल: GitHub + पोर्टफोलियो + रोज 1 समस्या",
+    en: "💻 Programming roadmap (2026):\n\n1. Month 1-2: Pick one language — Python (best) or JavaScript; master logic + data structures\n2. Month 3-4: Build small projects — calculator, to-do app, a webpage\n3. Month 5-6: Choose a branch — web / app / AI / data\n4. Professional: GitHub + portfolio + solve 1 problem daily\n\nWhich branch interests you — web, app, or AI?"
+  },
+  {
+    id: "money", match: /টাকা|টাকার|পয়সা|money|টিনংশন|টিননিশন|বিনিয়োগ|invest|সেভিং|saving|বাজেট|budget|আয়|income|আয়ের|ব্যবসা|business|স্টার্টআপ|startup|সাইড|শেয়ার|share|ক্রিপ্টো|crypto/i,
+    bn: "💰 প্রাইভেট ব্যক্তিগত ফিন্যান্স ফ্রেমওয়ার্ক:\n\n১. **৫০/৩০/২০ নিয়ম**: প্রয়োজন ৫০%, চাওয়া ৩০%, সেভিং+বিনিয়োগ ২০%\n২. **সাবধান**: আয়ের কমপক্ষে ৩-৬ মাসের ধার্য ফান্ড আগে বানাও\n৩. **বিনিয়োগ**: ভারতে/index fund (NIFTY 50) দীর্ঘমেয়াদে গড় 12-14% প্রাকৃতিক লাভ — ডিপোজিট ৬-৭% তুলনায় বেশি\n৪. **আয় বৃদ্ধি**: ১ দক্ষতা গভীরে শেখো, ১ সাইড হাসল তৈরি করো\n\n💡 প্রো টিপ: স্মার্টফোনে যত কম কিনো, ভবিষ্যতে তত টাকা। স্বয়ংক্রিয় সেভিং সিস্টেম সেট করো।\n\nআয়/বয়স বললে মোটামুটি পরিকল্পনা দিতে পারি।",
+    hi: "💰 पर्सनल फाइनेंस फ्रेमवर्क:\n\n1. 50/30/20 नियम — जरूरत 50%, चाहत 30%, बचत 20%\n2. पहले 3-6 महीने का इमरजेंसी फंड बनाओ\n3. निवेश — index fund (NIFTY 50) में लंबी अवधि में 12-14% औसत\n4. आय बढ़ाना — 1 स्किल गहरी करो, 1 साइड हसल बनाओ",
+    en: "💰 Personal finance framework:\n\n1. 50/30/20 rule: needs 50%, wants 30%, savings+investments 20%\n2. Build an emergency fund of 3-6 months of expenses first\n3. Investing: index funds (NIFTY 50) average 12-14% long-term vs 6-7% FDs\n4. Income: deepen 1 skill + build 1 side hustle\n\nShare your income/age and I can give a rough plan."
+  },
+  {
+    id: "interview", match: /ইন্টারভিউ|interview|সিভি|cv|resume|রিজিউম|স্যাটেল|social|পিচ|job|নিয়োগ|হায়ার|লিংকডইন|linkedin/i,
+    bn: "🎯 ইন্টারভিউ জেতার প্রফেশনাল ফ্রেমওয়ার্ক:\n\n১. **STAR মেথড**: Situation → Task → Action → Result (৩টা শক্তিশালী উদাহরণ প্রস্তুত রাখো)\n২. **রিসার্চ**: কোম্পানি, প্রোডাক্ট, ইন্টারভিউয়ের নাম — ৩০ মিনিট প্রিপ\n৩. **CV যেভাবে**: ১ পেজ, অ্যাকশন ভার্ব, সংখ্যা দিয়ে ফলাফল (\"৩০% সেলস বেড়েছে\")\n৪. **ক্লোজিং**: \"আমার আর কী কী যোগ্যতা প্রমাণ করবো?\" — এই প্রশ্নটাই ইন্টারভিউয়ের শেষে প্রফেশনালি আলাদা করে\n\n💡 প্রো টিপ: মিরর সামনে ৩ বার প্র্যাকটিস; উত্তর ৯০ সেকেন্ডের মধ্যে শেষ কর।\n\nকোন পদে জানতে চাও? একটা মক ইন্টারভিউ করিয়ে নিতে পারো।",
+    hi: "🎯 इंटरव्यू जीतने का फ्रेमवर्क:\n\n1. STAR विधि — Situation→Task→Action→Result, 3 उदाहरण तैयार\n2. रिसर्च — कंपनी, प्रोडक्ट 30 मिनट पहले\n3. CV — 1 पेज, एक्शन वर्ब, नंबर से नतीजे\n4. क्लोजिंग — \"मुझे और क्या साबित करूं?\" सवाल पूछो",
+    en: "🎯 Interview-winning framework:\n\n1. STAR method: Situation→Task→Action→Result, prepare 3 strong stories\n2. Research company, product, interviewer (30 min)\n3. CV: 1 page, action verbs, quantify results (\"+30% sales\")\n4. Close with: \"What more can I prove to you?\"\n\nWhat role? I can run a mock interview with you."
+  },
+  {
+    id: "study", match: /পড়া|পড়াশোনা|পড়তে|study|চাকরি|এক্সাম|exam|পরীক্ষা|বোর্ড|বিরতি|সিলেবাস|book|বই/i,
+    bn: "📚 প্রফেশনাল স্টাডি সিস্টেম:\n\n১. **অ্যাংলো-Feynman**: মুখস্থ নয় — শেখা বিষয় নিজে নিজে ব্যাখ্যা করো (যেন কাউকে শেখাচ্ছো)\n২. **স্পেসড রিপিটিশন**: ১ দিন, ৩ দিন, ১ সপ্তাহ পর রিভিউ — মনে থাকে ৩x বেশি\n৩. **Pomodoro**: ২৫ মিনিট ফোকাস + ৫ মিনিট বিরতি = ৪ চক্র, তারপর ৩০ মিনিট বিরতি\n৪. **অ্যাকটিভ রিকল**: ক্লোজ বই, লিখুন যা মনে আছে, তারপর চেক\n\n💡 প্রো টিপ: ফোন অন্য ঘরে রাখো — ১টা ডিস্ট্রাকশন ২৫ মিনিটের ফোকাস ভাঙে।\n\nকোন বিষয়ে দুর্বলতা? কৌশল বানাতে পারি।",
+    hi: "📚 प्रोफेशनल स्टडी सिस्टम:\n\n1. Feynman विधि — पढ़ो और खुद को समझाओ\n2. Spaced repetition — 1 दिन, 3 दिन, 1 हफ्ते बाद रिव्यू\n3. Pomodoro — 25 मिनट फोकस + 5 मिनट ब्रेक\n4. Active recall — किताब बंद करके लिखो",
+    en: "📚 Professional study system:\n\n1. Feynman technique: explain what you learned out loud\n2. Spaced repetition: review after 1 day, 3 days, 1 week\n3. Pomodoro: 25 min focus + 5 min break cycles\n4. Active recall: close the book, write, then check\n\nWhich subject challenges you? Happy to build a plan."
+  },
+  {
+    id: "health", match: /স্বাস্থ্য|health|ব্যায়াম|exercise|ডায়েট|diet|খাদ্য|উল|weight|ওজন|ঘুম|sleep|ফিটনেস|fitness/i,
+    bn: "🩺 প্রতিদিনের স্বাস্থ্য — প্রমাণভিত্তিক ৪ ভিত্তি:\n\n১. **ঘুম ৭-৯ ঘণ্টা**: সুস্থতার সবচেয়ে undervalued ফ্যাক্টর\n২. **প্রোটিন + সবজি**: প্রতিটি খাবারে প্রোটিন (ডাল/ডিম/দুধ) + ২ রংয়ের সবজি\n৩. **৩০ মিনিট চলন**: বাড়তি দরকার নেই — হাঁটাই যথেষ্ট, রোজ\n৪. **জল**: প্রতিদিন ২-৩ লিটার\n\n💡 প্রো টিপ: সকালের সূর্য + ১৫ মিনিট হাঁটা = দিনটা double-energy।\n\nকোন সমস্যায় ভুগছো? নিরাপদ প্রতিরোধ টিপস বলবো (চিকিৎসকের বিকল্প নয়)।",
+    hi: "🩺 दैनिक स्वास्थ्य — 4 साक्ष्य-आधारित आधार:\n\n1. नींद 7-9 घंटे\n2. प्रोटीन + सब्जियां हर खाने में\n3. 30 मिनट चलना रोज़\n4. 2-3 लीटर पानी",
+    en: "🩺 Daily health — 4 evidence-based pillars:\n\n1. Sleep 7-9 hours (most underrated factor)\n2. Protein + vegetables in every meal\n3. 30 minutes of walking daily\n4. 2-3 liters of water\n\nTell me your concern and I'll give practical prevention tips."
+  },
+  {
+    id: "psychology", match: /আত্মবিশ্বাস|ভয়|tension|চাপ|টেনশন|মন|স্ট্রেস|stress|উদাস|হতাশ|depress|উদ্বেগ|anxiety|আবেগ|emotional|রাগ|দুশ্চিন্তা|brain|মাইন্ড|mind/i,
+    bn: "🧠 মেন্টাল ক্লিয়ারনেস — কগনিটিভ ফ্রেমওয়ার্ক:\n\n১. **চিন্তা = ঘটনা নয়**: ভয়/টেনশন মস্তিষ্কের অ্যালার্ম (`amygdala`), বাস্তব বিপদ নয়। এটা বুঝলে চাপ ৫০% কমে\n২. **৫-৪-৩-২-১ গ্রাউন্ডিং**: টেনশনে ৫টা জিনিস দেখো, ৪টা শোনো, ৩টা স্পর্শ করো, ২টা ঘ্রাণ নাও, ১টা স্বাদ — ৬০ সেকেন্ডে মন ঠান্ডা\n৩. **জার্নালিং**: ১০ মিনিট লিখো — মস্তিষ্কে প্রসেসিং সহজ হয়\n৪. **অ্যাকশন >>> ওয়েটিং**: দুশ্চিন্তার জবাবে একটাও ছোট অ্যাকশন (ফোন কল, লিখা), চিন্তা-চক্র ভাঙে\n\n💡 প্রো টিপ: ২ সপ্তাহের বেশি রোজকার মারাত্মক টেনশনে — প্রফেশনাল কাউন্সেলরের কাছে যাও, সেটাই সাহসী কাজ।\n\nকী ঘটছে, বলো — কীভাবে সাহায্য করবো বুঝতে পারবো।",
+    hi: "🧠 मानसिक स्पष्टता — संज्ञानात्मक ढांचा:\n\n1. विचार ≠ सच्चाई वाली घटना\n2. 5-4-3-2-1 grounding तकनीक\n3. 10 मिनट journaling\n4. कार्रवाई > सोचना",
+    en: "🧠 Mental clarity — cognitive framework:\n\n1. Thoughts are alarms, not reality\n2. 5-4-3-2-1 grounding exercise (see/hear/touch/smell/taste)\n3. 10-min journaling to offload the mind\n4. Action beats overthinking — do one small step\n\nIf this is severe or daily for 2+ weeks, please see a professional — it's the strong move."
+  },
+  {
+    id: "greeting", match: /হ্যালো|হাই|hello|আসসালামু|হ্যালো|শুভ|good morning|good evening|একদম|ki obostha|কি অবস্থা|আছো|কেমন/i,
+    bn: "👋 হ্যালো! আমি SmartBot Pro — প্রফেশনাল এডভাইজার।\n\nনিচের যেকোনো বিষয়ে জিজ্ঞেস করো:\n📊 ক্যারিয়ার & জব • 💻 কোডিং শেখা • 💰 টাকা ও বিনিয়োগ\n🎯 ইন্টারভিউ • 📚 পড়াশোনা • 🩺 স্বাস্থ্য • 🧠 মন\n\nবাংলা, হিন্দি, ইংরেজি — যেকোনো ভাষায় বলো।",
+    hi: "👋 नमस्ते! मैं SmartBot Pro हूं। किसी भी विषय पर सवाल पूछो — करियर, कोडिंग, पैसा, इंटरव्यू, पढ़ाई, सेहत या मन।",
+    en: "👋 Hey! I'm SmartBot Pro — a professional advisor. Ask about career, coding, money, interviews, studies, health, or mindset. Bengali, Hindi, or English — your choice."
+  },
+  {
+    id: "thanks", match: /ধন্যবাদ|thank|শুকরিয়া|ধন্য হিসাবে/i,
+    bn: "🙏 স্বাগতম! মনে রেখো — ১টা ভালো প্রশ্ন = ১০টা উত্তর।\n\nআর কোনো প্রশ্ন থাকলে বলো, আমি এখানেই আছি।",
+    hi: "🙏 धन्यवाद! एक और सवाल हो तो बताओ, मैं हाज़िर हूं।",
+    en: "🙏 Happy to help! One good question is worth ten answers — ask me anything else anytime."
+  }
+];
+
+function detectLang(msg) {
+  if (/[\u0980-\u09FF]/.test(msg)) return 'bn';
+  if (/[\u0900-\u097F]/.test(msg)) return 'hi';
+  return 'en';
+}
+
+function getReply(msg) {
+  const lang = detectLang(msg);
+  for (let k of KNOWLEDGE) {
+    if (k.match.test(msg)) return k[lang] || k.bn;
+  }
+  if (lang === 'bn')
+    return "🤔 আমি এখনো এই বিষয়ে উত্তর লিখিনি, তবে জানতে চাই — প্রশ্নটা আরেকটু বিস্তারে বলো?\n\nপরিশ্রমের সাথে আমি বিষয়টা analysis করে উত্তর দেবো। বিকল্প: কোড, ক্যারিয়ার, টাকা, ইন্টারভিউ, স্বাস্থ্য, মন — এই বিষয়ে ask করো।";
+  if (lang === 'hi')
+    return "🤔 मुझे थोड़ा और संदर्भ चाहिए. आपका सवाल विस्तार से बताइए, मैं विश्लेषण करके जवाब दूंगा।";
+  return "🤔 Give me a bit more context — expand your question and I'll give a structured, professional answer. Or ask about career, coding, money, interviews, health, or mindset.";
+}
+
+function speak(text, btn) {
+  if (activeSpeak && activeSpeak.stop) { activeSpeak.stop(); activeSpeak = null; }
+  const btnClean = () => { btn.classList.remove('speaking'); btn.textContent = '🔊 Read'; };
+  const lang = detectLang(text).replace('hi','bn');
+  const audio = new Audio('https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodeURIComponent(text) + '&tl=' + (detectLang(text)) + '&client=tw-ob');
+  activeSpeak = audio;
+  btn.classList.add('speaking');
+  btn.textContent = '⏹️ Stop';
+  audio.onended = () => { btnClean(); activeSpeak = null; };
+  audio.onerror = () => { btnClean(); speakLocal(text, btn); };
+  audio.play().catch(() => { btnClean(); speakLocal(text, btn); });
+  btn.onclick = () => { audio.pause(); audio.currentTime = 0; btnClean(); activeSpeak = null; };
+}
+
+function speakLocal(text, btn) {
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = detectLang(text) === 'hi' ? 'hi-IN' : detectLang(text) === 'bn' ? 'bn-BD' : 'en-US';
+    u.rate = 0.95;
+    u.pitch = 1.05;
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(x => x.lang === u.lang) || voices.find(x => x.lang.startsWith(u.lang.slice(0,2)));
+    if (v) u.voice = v;
+    btn.classList.add('speaking');
+    btn.textContent = '⏹️ Stop';
+    u.onend = () => { btn.classList.remove('speaking'); btn.textContent = '🔊 Read'; activeSpeak = null; };
+    speechSynthesis.speak(u);
+  } catch (e) {
+    btn.classList.remove('speaking');
+    btn.textContent = '🔊 Read';
+  }
+}
+
+function addMsg(text, who) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  if (who === 'bot') {
+    div.innerHTML = '<span class="badge">🧠 ' + STYLE[currentTone].name + '</span>' + text.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+    const btn = document.createElement('button');
+    btn.className = 'read-btn';
+    btn.textContent = '🔊 Read';
+    btn.onclick = () => speak(text, btn);
+    div.appendChild(btn);
+  } else {
+    div.textContent = text;
+  }
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function setTone(tone) {
+  currentTone = tone;
+  document.querySelectorAll('.pro-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pro-btn').forEach(b => { if (b.textContent.includes(tone === 'neutral' ? 'Professional' : tone === 'male' ? 'Male' : 'Female')) b.classList.add('active'); });
+}
+
+function send() {
+  const msg = input.value.trim();
+  if (!msg) return;
+  addMsg(msg, 'user');
+  input.value = '';
+  typing.style.display = 'block';
+  chat.scrollTop = chat.scrollHeight;
+  setTimeout(() => {
+    typing.style.display = 'none';
+    addMsg(getReply(msg), 'bot');
+  }, 600);
+}
+
+input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+document.querySelectorAll('.demo-tags span').forEach(tag => {
+  tag.addEventListener('click', () => { input.value = tag.textContent.trim(); send(); });
+});
+
+addMsg("👋 হ্যালো! আমি SmartBot Pro — প্রফেশনাল এডভাইজার।\n\n📊 ক্যারিয়ার • 💻 কোডিং • 💰 টাকা • 🎯 ইন্টারভিউ\n📚 পড়া • 🩺 স্বাস্থ্য • 🧠 মনের যত্ন\n\nযেকোনো প্রশ্ন বাংলা/हिंदी/English — উত্তর পাবো analysis করে!", 'bot');
+</script>
+</body>
+</html>

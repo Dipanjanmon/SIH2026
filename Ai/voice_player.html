@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartVoice Pro — Local Neural Voice (Offline)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI','Noto Sans Bengali',sans-serif; }
+  body { background:#0f172a; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px; color:#e2e8f0; }
+  .box { width:620px; max-width:100%; background:#1e293b; border-radius:20px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .head { background:linear-gradient(135deg,#7c3aed,#db2777); padding:16px 20px; }
+  .head h1 { color:#fff; font-size:18px; }
+  .head p { color:#fce7f3; font-size:12px; }
+  .body { padding:20px; }
+  .pane { background:#0f172a; border-radius:14px; padding:14px; margin-bottom:14px; }
+  .pane h3 { font-size:13px; color:#38bdf8; margin-bottom:10px; }
+  .voice-card { display:flex; align-items:center; gap:12px; padding:10px; border-radius:12px; background:#1e293b; margin-bottom:8px; }
+  .voice-card .ic { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .voice-card .ic.m { background:#2563eb; }
+  .voice-card .ic.f { background:#ec4899; }
+  .voice-card .info { flex:1; }
+  .voice-card .info b { font-size:14px; display:block; }
+  .voice-card .info small { color:#94a3b8; font-size:11px; }
+  .voice-card .speaktone { background:#334155; color:#fff; border:none; padding:8px 18px; border-radius:10px; font-size:14px; cursor:pointer; }
+  .voice-card .speaktone:hover { background:#7c3aed; }
+  .voice-card .speaktone.playing { background:#ef4444; }
+  .config { display:flex; gap:18px; margin-top:12px; }
+  .config div { flex:1; }
+  .config small { color:#94a3b8; font-size:11px; }
+  .config input { width:100%; accent-color:#7c3aed; }
+  .statusbar { margin-top:12px; font-size:12px; color:#34d399; text-align:center; min-height:18px; }
+  .note { font-size:11px; color:#64748b; margin-top:10px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="head">
+    <h1>🗣️ SmartVoice Pro — ডাউনলোড করা neural voice</h1>
+    <p>পূর্ণ অফলাইন • server লাগে না • এই HTML নিজে নিজে চলে</p>
+  </div>
+  <div class="body">
+
+    <div class="pane">
+      <h3>🧔 Male Voice (পুরুষ গলা)</h3>
+      <div class="voice-card">
+        <div class="ic m">👨</div>
+        <div class="info"><b>বাংলা Male</b><small>Microsoft Bashkar Neural</small></div>
+        <button class="speaktone" onclick="play('voices/male_bn.mp3', this)">🔊 বাজাও</button>
+      </div>
+      <div class="voice-card">
+        <div class="ic m">👨</div>
+        <div class="info"><b>हिंदी Male</b><small>Microsoft Madhur Neural</small></div>
+        <button class="speaktone" onclick="play('voices/male_hi.mp3', this)">🔊 बजाओ</button>
+      </div>
+      <div class="voice-card">
+        <div class="ic m">👨</div>
+        <div class="info"><b>English Male</b><small>Microsoft Prabhat Neural</small></div>
+        <button class="speaktone" onclick="play('voices/male_en.mp3', this)">🔊 Play</button>
+      </div>
+    </div>
+
+    <div class="pane">
+      <h3>👩 Female Voice (মেয়ের গলা)</h3>
+      <div class="voice-card">
+        <div class="ic f">👩</div>
+        <div class="info"><b>বাংলা Female</b><small>Microsoft Tanishaa Neural</small></div>
+        <button class="speaktone" onclick="play('voices/female_bn.mp3', this)">🔊 বাজাও</button>
+      </div>
+      <div class="voice-card">
+        <div class="ic f">👩</div>
+        <div class="info"><b>हिंदी Female</b><small>Microsoft Swara Neural</small></div>
+        <button class="speaktone" onclick="play('voices/female_hi.mp3', this)">🔊 बजाओ</button>
+      </div>
+      <div class="voice-card">
+        <div class="ic f">👩</div>
+        <div class="info"><b>English Female</b><small>Microsoft Neerja Neural</small></div>
+        <button class="speaktone" onclick="play('voices/female_en.mp3', this)">🔊 Play</button>
+      </div>
+    </div>
+
+    <div class="pane">
+      <h3>🎛️ Voice মিলানো (সব voice-এ যায়)</h3>
+      <div class="config">
+        <div><small>⚡ Speed</small>
+          <input type="range" id="spd" min="0.6" max="1.8" step="0.05" value="1.0" oninput="document.getElementById('spdL').textContent=this.value+'x'">
+          <small id="spdL">1.0x</small>
+        </div>
+        <div><small>🎵 Pitch (Hz)</small>
+          <input type="range" id="pch" min="-0.5" max="0.5" step="0.05" value="0" oninput="document.getElementById('pchL').textContent=this.value">
+          <small id="pchL">0</small>
+        </div>
+      </div>
+      <div class="statusbar" id="status">🔊 উপরের যেকোনো voice বাটনে চাপ দাও</div>
+    </div>
+
+    <div class="note">
+      🎧 শুনে দেখো — এই voice গুলোই তোমার AI bot-এ ব্যবহার হবে (বাংলা/हिंदी/English) • Downloaded from Microsoft Edge Neural TTS
+    </div>
+  </div>
+</div>
+
+<script>
+let cur = null;
+function play(file, btn) {
+  const status = document.getElementById('status');
+  if (cur) {
+    cur.classList.remove('playing');
+    cur.textContent = '🔊 বাজাও';
+    try { document.querySelectorAll('audio').forEach(a => a.pause()); } catch(e){}
+    cur = null;
+    if (btn && btn.dataset.same === '1') { status.textContent = '⏹️ থামানো হলো'; return; }
+  }
+  if (!cur) {
+    const a = new Audio(file);
+    a.playbackRate = parseFloat(document.getElementById('spd').value);
+    a.preservesPitch = false;
+    btn.classList.add('playing');
+    btn.textContent = '⏹️ Stop';
+    a.onplay = () => { status.textContent = '🗣️ বাজছে: ' + file; a.playbackRate = parseFloat(document.getElementById('spd').value); };
+    a.onended = () => { btn.classList.remove('playing'); btn.textContent = '🔊 বাজাও'; status.textContent = '✅ শেষ'; cur = null; };
+    a.play().catch(e => { status.textContent = '⚠️ ফাইল খেলানো যাচ্ছে না: ' + e.message; btn.classList.remove('playing'); btn.textContent = '🔊 বাজাও'; });
+    cur = { el: btn, audio: a };
+    btn.dataset.same = '1';
+  }
+}
+</script>
+</body>
+</html>

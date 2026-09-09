@@ -1,0 +1,24 @@
+C:\Users\Aniketh\Desktop\whatsapp-agent\AI\chat.py:1: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+ * Serving Flask app 'server'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.33:5000
+Press CTRL+C to quit
+127.0.0.1 - - [09/Sep/2026 10:10:41] "POST /medical/chat HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 10:10:54] "POST /medical/chat HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 10:10:54] "GET /medical/history?uid=test2 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 10:11:02] "GET /session/clear?uid=test2 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 10:11:02] "GET /medical/history?uid=test2 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 10:11:02] "GET /session/recover?uid=test2 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 10:11:57] "GET /speak?q=\U0001fa7a%20\u0986\u09b8\u09b8\u09be\u09b2\u09be\u09ae\u09c1%20\u0986\u09b2\u09be\u0987\u0995\u09c1\u09ae!%20\u0986\u09ae\u09bf%20\u09ae\u09c7\u09a1\u09bf\u0995\u09c7\u09b2%20\u09b8\u09b9\u0995\u09be\u09b0\u09c0\u0964%20\u09ae\u09be\u09a5\u09be%20\u09ac\u09cd\u09af\u09a5\u09be,%20\u099c\u09cd\u09ac\u09b0,%20\u09aa\u09c7\u099f%20\u09ac\u09cd\u09af\u09a5\u09be%20—%20\u09af\u09c7\u0995\u09cb\u09a8\u09cb%20\u09b8\u09cd\u09ac\u09be\u09b8\u09cd\u09a5\u09cd\u09af%20\u09aa\u09cd\u09b0\u09b6\u09cd\u09a8%20\u0995\u09b0\u09c1\u09a8%20\u09ac\u09be\u0982\u09b2\u09be\u09af\u09bc\u0964%20\u0986\u09ae\u09bf%20\u09b8\u09be\u09a7\u09be\u09b0\u09a3%20\u09a4\u09a5\u09cd\u09af%20%2B%20\u0998\u09b0\u09cb\u09af\u09bc\u09be%20\u09ac\u09cd\u09af\u09ac\u09b8\u09cd\u09a5\u09be%20%2B%20\u09a1\u09be\u0995\u09cd\u09a4\u09be\u09b0%20\u09a6\u09c7\u0996\u09be\u09b0%20\u09b8\u09ae\u09af\u09bc%20\u09ac\u09b2\u09ac\u09cb\u0964%20\u098f\u099f\u09be%20\u0986\u09b8\u09b2%20\u09a1\u09be\u0995\u09cd\u09a4\u09be\u09b0\u09bf%20\u09aa\u09b0\u09be\u09ae\u09b0\u09cd\u09b6%20\u09a8\u09af\u09bc\u0964&tone=male HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 10:14:31] "OPTIONS /medical/chat HTTP/1.1" 200 -

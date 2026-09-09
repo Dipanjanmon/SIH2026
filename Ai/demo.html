@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBot — Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Noto Sans Bengali', sans-serif; }
+  body { background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+  .app { width: 400px; max-width: 100%; background: #1e293b; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .header { background: linear-gradient(135deg, #10b981, #0ea5e9); padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 42px; height: 42px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .header h1 { color: #fff; font-size: 18px; }
+  .header p { color: #e2f5ff; font-size: 12px; }
+  .chat { padding: 20px; height: 460px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #0f172a; }
+  .msg { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; position: relative; }
+  .user { align-self: flex-end; background: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
+  .bot { align-self: flex-start; background: #334155; color: #f1f5f9; border-bottom-left-radius: 4px; }
+  .bot .badge { font-size: 10px; color: #34d399; display: block; margin-bottom: 4px; }
+  .typing { display: none; align-self: flex-start; background: #334155; padding: 12px 16px; border-radius: 16px; border-bottom-left-radius: 4px; }
+  .typing span { width: 7px; height: 7px; background: #94a3b8; border-radius: 50%; display: inline-block; animation: blink 1.4s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+  .input-bar { display: flex; padding: 12px; background: #1e293b; gap: 8px; border-top: 1px solid #334155; }
+  .input-bar input { flex: 1; padding: 12px 14px; border: none; border-radius: 24px; background: #0f172a; color: #fff; font-size: 14px; outline: none; }
+  .input-bar input::placeholder { color: #64748b; }
+  .input-bar button { background: #10b981; color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 18px; cursor: pointer; }
+  .demo-tags { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px 0; background: #1e293b; }
+  .demo-tags span { background: #334155; color: #94a3b8; padding: 5px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; }
+  .demo-tags span:hover { background: #475569; color: #fff; }
+  .note { padding: 10px 20px; background: #1e293b; color: #64748b; font-size: 11px; text-align: center; border-top: 1px solid #334155; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="avatar">🤖</div>
+    <div>
+      <h1>SmartBot</h1>
+      <p>বাংলা • हिंदी • English</p>
+    </div>
+  </div>
+
+  <div class="demo-tags">
+    <span>🙂 "তুমি কেমন আছো?"</span>
+    <span>📚 "আমাকে একটা খাবার রেসিপি দাও"</span>
+    <span>🧠 "জীবনে সফল হওয়ার টিপস?"</span>
+    <span>🇮🇳 "तुम क्या कर रहे हो?"</span>
+  </div>
+
+  <div class="chat" id="chat"></div>
+
+  <div class="typing" id="typing"><span></span><span></span><span></span></div>
+
+  <div class="input-bar">
+    <input id="input" placeholder="এখানে লিখো..." autocomplete="off">
+    <button onclick="send()">➤</button>
+  </div>
+
+  <div class="note">⚠️ ডেমো মোড — API কানেক্ট না করলে fixed উত্তর দেখাবে</div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const typing = document.getElementById('typing');
+const input = document.getElementById('input');
+
+const sampleReplies = [
+  { q: /আছো|কেমন|কী খবর|how are/i,
+    a: "😊 একদম ফাইন আছি ভাই! তোমার খবরটা ভালো তো? বলো, আজ কী করে দিতে পারি?" },
+  { q: /রেসিপি|রান্না|খাবার|recipe/i,
+    a: "🍲 সেরা সহজ রেসিপি (৩ মিনিটে):\n\n১. ডিম ভাজি — ২টা ডিম, পেঁয়াজ, লঙ্কা\n২. তেলে পেঁয়াজ ভাজো\n৩. ডিম ভেঙে দাও, <১ মিনিট\n৪. লঙ্কা-নুন দিয়ে গরম গরম খাও!\n\nচাইলে চিকেন দিয়ে আরও স্মার্ট বানিয়ে দিতে পারি 😉" },
+  { q: /সফল|সফলতা|success|টিপস|tip/i,
+    a: "🧠 সফল হওয়ার ৪টা স্মার্ট টিপস:\n\n১. রোজ ছোট একটা লক্ষ্য দাও — বড়টাকে ভাগ করো\n২. মন খারাপ হলেও হাল ছাড়ো না\n৩. নতুন কিছু শেখো প্রতিদিন ২০ মিনিট\n৪. তোমার কাজকে ভালোবাসো, টাকা আসবেই\n\nবিশ্বাস করো, তুমি পারবে! 💪" },
+  { q: /क्या|कर रहे|हिंदी|namaste|नमस्ते/i,
+    a: "🙏 नमस्ते दोस्त! मैं बिल्कुल फ्री हूं और स्मार्ट हूं। बताओ आज मैं आपकी क्या मदद करूं? चाहे बात करनी हो, सीखना हो या कोई काम निपटाना हो — मैं हाज़िर हूं!" },
+  { q: /হ্যালো|হাই|hello|হাই|ki obostha|কি অবস্থা/i,
+    a: "👋 হ্যালো! শুনছি, তোমার জন্য কী করতে পারি? প্রশ্ন জিজ্ঞেস করো, আইডিয়া শেয়ার করো, বা শুধু গল্পই করো — আমি তোমার সাথে আছি!" },
+  { q: /ধন্যবাদ|thank/,
+    a: "🙌 সবসময়! আর কোনো দরকার হলে একদম বলো, আমি এখানেই আছি। তোমার দিন শুভ হোক! ✨" }
+];
+
+function addMsg(text, who) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  if (who === 'bot') div.innerHTML = '<span class="badge">SmartBot</span>' + text.replace(/\n/g, '<br>');
+  else div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function getReply(msg) {
+  for (let s of sampleReplies) {
+    if (s.q.test(msg)) return s.a;
+  }
+  return "🤔 দারুণ প্রশ্ন! তবে এখন আমি ডেমো মোডে আছি।\n\nআসল স্মার্ট উত্তর পেতে Gemini API key সেট করো — তাহলে বাংলা, হিন্দি, ইংরেজি — যেকোনো ভাষায় স্মার্ট উত্তর দেবো!";
+}
+
+function send() {
+  const msg = input.value.trim();
+  if (!msg) return;
+  addMsg(msg, 'user');
+  input.value = '';
+  typing.style.display = 'block';
+  chat.scrollTop = chat.scrollHeight;
+  setTimeout(() => {
+    typing.style.display = 'none';
+    addMsg(getReply(msg), 'bot');
+  }, 900);
+}
+
+input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+document.querySelectorAll('.demo-tags span').forEach(tag => {
+  tag.addEventListener('click', () => {
+    input.value = tag.textContent.replace(/^[^\s"]*\s*"?|"?$/g, '').replace(/^["']|["']$/g, '');
+    send();
+  });
+});
+
+addMsg("হ্যালো! 👋 আমি SmartBot — তোমার স্মার্ট সহকারী।\n\nবাংলা, হিন্দি বা ইংরেজিতে লিখো। যেমন: \"তুমি কেমন আছো?\"", 'bot');
+</script>
+</body>
+</html>
