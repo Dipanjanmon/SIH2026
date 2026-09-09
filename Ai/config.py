@@ -1,10 +1,29 @@
 import json
 import os
 
-GEMINI_API_KEY = "AIzaSyDESwvWxmvGgcCfd5ZJNt2pI4QkNNXFiGI"
+def _read_secret(name):
+    val = os.environ.get(name)
+    if val:
+        return val
+    env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    try:
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, value = line.partition("=")
+                    if key.strip() == name:
+                        value = value.strip().strip('"').strip("'")
+                        if value:
+                            return value
+    except OSError:
+        pass
+    return ""
+
+GEMINI_API_KEY = _read_secret("GEMINI_API_KEY")
 MODEL_NAME = "gemini-2.0-flash"
 
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = _read_secret("OPENROUTER_API_KEY")
 OPENROUTER_MODEL = "qwen/qwen-2.5-72b-instruct"
 
 MEDICAL_SYSTEM_PROMPT = (
