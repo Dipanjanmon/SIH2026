@@ -1,0 +1,10 @@
+node_modules
+.wwebjs_cache
+wa-session
+media
+img
+locations
+__pycache__
+*.log
+*.bat
+.git

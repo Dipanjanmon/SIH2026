@@ -1,0 +1,17 @@
+{
+  "name": "wa-js-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp bot using whatsapp-web.js (own number, send+receive+media, session saved)",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "exif-parser": "^0.1.12",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.1-alpha.0"
+  },
+  "allowScripts": {
+    "puppeteer@24.38.0": true
+  }
+}

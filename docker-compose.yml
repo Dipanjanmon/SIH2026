@@ -1,4 +1,4 @@
-# PashuRaksha — one-command deploy: `docker compose up --build`
+# PashuRaksha â€” one-command deploy: `docker compose up --build`
 # 4 services: postgres (PostGIS) -> ai (FastAPI+CNN) -> backend (Spring) -> frontend (nginx)
 # Access the app at http://localhost (port 80). Backend at :8080, AI at :5000.
 
@@ -29,7 +29,7 @@ services:
       dockerfile: Dockerfile
     container_name: pashuraksha_ai
     environment:
-      # LLM keys are optional — system falls back to rule-based if absent.
+      # LLM keys are optional â€” system falls back to rule-based if absent.
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_API_KEY_2: ${GEMINI_API_KEY_2:-}
       GEMINI_API_KEY_3: ${GEMINI_API_KEY_3:-}
@@ -73,6 +73,19 @@ services:
       - "80:80"
     depends_on:
       - backend
+    restart: unless-stopped
+
+
+  whatsapp_bot:
+    build:
+      context: ./whatsapp-bot
+      dockerfile: Dockerfile
+    container_name: pashuraksha_whatsapp
+    env_file:
+      - ./whatsapp-bot/.env
+    depends_on:
+      ai:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

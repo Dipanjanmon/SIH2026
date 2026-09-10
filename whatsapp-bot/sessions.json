@@ -1,0 +1,343 @@
+{
+ "test1": {
+  "updated": 1788928749.8549383,
+  "history": [
+   {
+    "role": "user",
+    "content": "???? ????? ????, ?? ?????"
+   },
+   {
+    "role": "assistant",
+    "content": "আপনি বলেছেন যে আপনার কানে যন্ত্রণা হচ্ছে, তবে বাকি অংশটা স্পষ্টভাবে বুঝতে পারিনি। আপনি কি আরও কিছু সমস্যা বোধ করছেন? কানে যন্ত্রণার কথা নিয়ে যদি উত্তর চান, তাহলে এটা সাধারণ কানের সমস্যা হতে পারে, যেমন কানে জল পড়া, কানের সংক্রমণ বা কানের দগদগি। যদি যন্ত্রণা প্রচণ্ড বা স্থায়ী হয়, তাহলে ডাক্তারের সাথে যোগাযোগ করার পরামর্শ দেওয়া হচ্ছে। তবে আপনি যদি আরও বিস্তারিত তথ্য দেন, তাহলে আমি আরও সহায়ক হতে পারি।"
+   }
+  ]
+ },
+ "test2": {
+  "updated": 1788928854.8134313,
+  "history": [
+   {
+    "role": "user",
+    "content": "???? ????? ????, ?? ?????"
+   },
+   {
+    "role": "assistant",
+    "content": "আপনি যদি কোনো প্রশ্ন জিজ্ঞাসা করতে চান, তাহলে সেটি স্পষ্টভাবে লিখুন। আমি আপনার প্রশ্নের উত্তর দিতে চাই। আপনি কি বলতে চান তা বুঝতে পারছি না। আমি শুধুমাত্র চিকিৎসা বা স্বাস্থ্য সম্পর্কিত প্রশ্নের উত্তর দিতে পারি। আপনি আমার কাছে যা জানতে চান, তা স্পষ্টভাবে জানান।"
+   },
+   {
+    "role": "user",
+    "content": "?????? ????"
+   },
+   {
+    "role": "assistant",
+    "content": "আপনার প্রশ্নটি স্পষ্টভাবে লেখা হয়নি। আমি সাহায্য করতে চাই, তাই অনুগ্রহ করে আপনার প্রশ্নটি স্পষ্টভাবে লিখুন। আমি শুধুমাত্র চিকিৎসা বা স্বাস্থ্য সম্পর্কিত প্রশ্নের উত্তর দিতে পারি।"
+   }
+  ]
+ },
+ "vet:unknown": {
+  "updated": 1788929996.9422266,
+  "history": [
+   {
+    "role": "user",
+    "content": "আমার গরুর গায়ে বড় ফোসকা/দানা দেখা যাচ্ছে, লম্পি স্কিন কি?"
+   },
+   {
+    "role": "assistant",
+    "content": "(ক) সম্ভবত গরুটির রোগটি হচ্ছে লাম্পি স্কিন (Lumpy Skin Disease, LSD)। এর প্রধান লক্ষণ গায়ে বড় ফোসকা/দানা, উত্তেজনা, অমনোযোগী আচরণ, খাদ্য ত্যাগ, তাপমাত্রা বেড়ে যাওয়া ও দুধের উৎপাদন কমে যাওয়া।\n\n(খ) ঘরোয়া ব্যবস্থা হিসেবে গরুটিকে শান্ত ও শুচিত্ব অবস্থার মধ্যে রাখুন। খাদ্য ও পানীয় নিয়মিত দিন এবং পর্যাপ্ত আশ্রয় দিন। ফোসকাগুলোতে জলের ফোঁটা দিয়ে ঠাণ্ডা রাখতে পারেন।\n\n(গ) অবশ্যই গরুটিকে ভেটেরিনারি ডাক্তার/প্রাণিসম্পদ কর্মকর্তার কাছে দেখাতে হবে। নিকটস্থ প্রাণি হাসপাতাল, উপজেলা/তালুকা প্রাণিসম্পদ দপ্তর বা হেল্পলাইন ১৯৬২-এ যোগাযোগ করুন। লাম্পি স্কিন একটি নোটিফায়েবল রোগ, তাই অবিলম্বে কর্মকর্তাকে জানাতে হবে। মৃত পশু খুলতে নিষেধ।"
+   },
+   {
+    "role": "user",
+    "content": "আমার গরুর গায়ে বড় ফোসকা/দানা দেখা যাচ্ছে, লম্পি স্কিন কি?"
+   },
+   {
+    "role": "assistant",
+    "content": "(ক) হ্যাঁ, গরুর গায়ে বড় ফোসকা/দানা দেখলে সম্ভবত লাম্পি স্কিন (Lumpy Skin Disease, LSD) হতে পারে। এর অন্যান্য লক্ষণ হল: উত্তেজনা, অমনোযোগী আচরণ, খাদ্য ত্যাগ, তাপমাত্রা বেড়ে যাওয়া ও দুধের উৎপাদন কমে যাওয়া।\n\n(খ) ঘরোয়া ব্যবস্থা হিসেবে গরুটিকে শান্ত ও শুচিত্ব অবস্থার মধ্যে রাখুন। খাদ্য ও পানীয় নিয়মিত দিন এবং পর্যাপ্ত আশ্রয় দিন। ফোসকাগুলোতে ঠাণ্ডা জলের ফোঁটা দিয়ে ঠাণ্ডা রাখতে পারেন। মশা ও পোকামাকড় থেকে সুরক্ষা দিন।\n\n(গ) অবশ্যই গরুটিকে ভেটেরিনারি ডাক্তার/প্রাণিসম্পদ কর্মকর্তার কাছে দেখাতে হবে। নিকটস্থ প্রাণি হাসপাতাল, উপজেলা/তালুকা প্রাণিসম্পদ দপ্তর বা হেল্পলাইন ১৯৬২-এ যোগাযোগ করুন। লাম্পি স্কিন একটি নোটিফায়েবল রোগ, তাই অবিলম্বে কর্মকর্তাকে জানাতে হবে। মৃত পশু খুলতে নিষেধ।"
+   },
+   {
+    "role": "user",
+    "content": "আমার গরুর গায়ে বড় ফোসকা/দানা দেখা যাচ্ছে, লম্পি স্কিন কি?"
+   },
+   {
+    "role": "assistant",
+    "content": "(ক) হ্যাঁ, গরুর গায়ে বড় ফোসকা/দানা দেখলে সম্ভবত লাম্পি স্কিন (Lumpy Skin Disease, LSD) হতে পারে। এর অন্যান্য লক্ষণ হল: উত্তেজনা, অমনোযোগী আচরণ, খাদ্য ত্যাগ, তাপমাত্রা বেড়ে যাওয়া ও দুধের উৎপাদন কমে যাওয়া।\n\n(খ) ঘরোয়া ব্যবস্থা হিসেবে গরুটিকে শান্ত ও শুচিত্ব অবস্থার মধ্যে রাখুন। খাদ্য ও পানীয় নিয়মিত দিন এবং পর্যাপ্ত আশ্রয় দিন। ফোসকাগুলোতে ঠাণ্ডা জলের ফোঁটা দিয়ে ঠাণ্ডা রাখতে পারেন। মশা ও পোকামাকড় থেকে সুরক্ষা দিন।\n\n(গ) অবশ্যই গরুটিকে ভেটেরিনারি ডাক্তার/প্রাণিসম্পদ কর্মকর্তার কাছে দেখাতে হবে। নিকটস্থ প্রাণি হাসপাতাল, উপজেলা/তালুকা প্রাণিসম্পদ দপ্তর বা হেল্পলাইন ১৯৬২-এ যোগাযোগ করুন। লাম্পি স্কিন একটি নোটিফায়েবল রোগ, তাই অবিলম্বে কর্মকর্তাকে জানাতে হবে। মৃত পশু খুলতে নিষেধ।"
+   }
+  ]
+ },
+ "vet:banglish-test": {
+  "updated": 1788931443.6635766,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar gorur gai te dana poreche, eta ki lumpy skin disease?"
+   },
+   {
+    "role": "assistant",
+    "content": "hobe, apnar gorur lumpy skin disease (LSD) hote pare. eta ek virus based disease jeta gorur, barah, ebong gaddi pashur modhye thake. eta disease er lokkho hoy: gai er gaire dana, jwala, onoshtha, khela jharap, ebong somoy somoy amon nirog.\n\n(ক) sambhobjo rog: lumpy skin disease (LSD)\n(খ) ghorojol/upaay: \n1. gorur ko alada rakhen\n2. bhalo bhata deyen\n3. jol porer somoy chai deyen\n4. ekta ACV (apple cider vinegar) solution diye gorur gaira dhulite pari\n(গ) vet doctor/panisampad karmokarta der ke dekhtey hobe jodi:\n1. gorur er jonno sokol upaay korleo bhalo hoy na\n2. bhitar 24 ghonto khela jharap thake\n3. gorur er onoshtha bhalo hoy na bhalo hoy na\n\nlumpy skin disease amon nirog tohini notun, tai apni local panisampad daptor er sathe kontakto koren."
+   },
+   {
+    "role": "user",
+    "content": "amar gorur gai te dana poreche, eta ki lumpy skin disease?"
+   },
+   {
+    "role": "assistant",
+    "content": "hobe, apnar gorur gai te dana poreche, eta lumpy skin disease (LSD) hoite pare. eta ek prottirodhota virus-based disease jeta gorur er modhe thake. \n\n(ক) samvhabjo rog: lumpy skin disease (LSD)\n\n(খ) ghorojol/prottimik upaay:\n1. gorur ko alada rakhen\n2. gorur er gaire kichu jol diye dhulun\n3. bhalo bhata deun\n4. gorur er khetre insect control korun, jemon: mosquito net use koren\n\n(গ) vet doctor/panisampad karmokarta dekhate hobe jodi:\n1. gorur er onoshtha bhalo hoy na\n2. gorur er gai te bhalo kore dana pore\n3. gorur er jonno sokol upaay korleo bhalo hoy na\n\napni nijer upojela/porishod panisampad daptor er sathe kontakto koren, bahin helpline 1962 a call koren. LSD amon nirog tohini notun, tai apni jekhane thaken seta amon nirog bhalo korar jonno karmokarta der sathe kontakto kore feli."
+   }
+  ]
+ },
+ "vet:greet-test": {
+  "updated": 1788931582.6632407,
+  "history": [
+   {
+    "role": "user",
+    "content": "hlw"
+   },
+   {
+    "role": "assistant",
+    "content": "হ্যালো! আমি পশু সহায় (PashuSahaya)। আপনি কেমন আছেন? আপনার কোনো পশুর সমস্যা আছে কি? আমি আপনাকে সাহায্য করতে চাই।"
+   },
+   {
+    "role": "user",
+    "content": "hello"
+   },
+   {
+    "role": "assistant",
+    "content": "Hello! I'm PashuSahaya, your veterinary assistant. How are you? Do you have any concerns about your livestock or pets? I'm here to help."
+   },
+   {
+    "role": "user",
+    "content": "ki obostha"
+   },
+   {
+    "role": "assistant",
+    "content": "Ami bhalo achi, dhonnobad! Apni kemon achen? Apnar kono pashu er obostha ba samasya janate chai."
+   },
+   {
+    "role": "user",
+    "content": "hlw bro"
+   },
+   {
+    "role": "assistant",
+    "content": "হ্যালো! আমি ভালো আছি, ধন্যবাদ! আপনি কেমন আছেন? কোনো পশুর সমস্যা আছে কি? আমি আপনাকে সাহায্য করতে চাই।"
+   }
+  ]
+ },
+ "vet:uid_mttnbnu8i9u0": {
+  "updated": 1788932011.6692307,
+  "history": [
+   {
+    "role": "user",
+    "content": "bengali te bolo"
+   },
+   {
+    "role": "assistant",
+    "content": "ঠিক আছে, আমি বাংলা হরফে উত্তর দিচ্ছি। আপনি আমার কী সাহায্য চান? গরু, ছাগল-ভেড়া, শুয়োর, মুরগি, কুকুর, বিড়াল বা অন্য কোনো পশু সম্পর্কে কী প্রশ্ন করবেন?"
+   },
+   {
+    "role": "user",
+    "content": "Helpline & compensation"
+   },
+   {
+    "role": "assistant",
+    "content": "হেল্পলাইন ও ক্ষতিপূরণ সংক্রান্ত তথ্য নিচে দেওয়া হল:\n\n### হেল্পলাইন\n- **প্রাণিসম্পদ হেল্পলাইন**: ১৯৬২\n- এই নম্বরে প্রাণিসম্পদ সম্পর্কিত যেকোনো সমস্যার জন্য সাহায্য পেতে পারেন। এখানে পশুচিকিৎসক ও প্রাণিসম্পদ কর্মকর্তাদের সাথে যোগাযোগ করা যায়।\n\n### ক্ষতিপূরণ\n- **নোটিফায়েবল রোগ সম্পর্কিত ক্ষতিপূরণ**:\n  - ফুট অ্যান্ড মাউথ ডিজিজ (FMD)\n  - লাম্পি স্কিন ডিজিজ (LSD)\n  - পেস্ট অফ স্মল রানেটস (PPR)\n  - আফ্রিকান সুয়াইন ফিভার (ASF)\n  - H5N1 ইনফ্লুয়েঞ্জা\n\n  এই রোগগুলি আইনগতভাবে দায়ী রোগ হলে, প্রাণিসম্পদ দপ্তর থেকে ক্ষতিপূরণ পাওয়া যায়। এর জন্য:\n  - রোগের চিহ্নগুলি স্পষ্টভাবে নির্দেশ করতে হবে।\n  - কর্মকর্তাদের কাছে সমস্যাটি অবিলম্বে জানাতে হবে।\n  - প্রয়োজনীয় প্রমাণপত্র সংগ্রহ করতে হবে (যেমন, পশুর রেজিস্ট্রেশন নম্বর, চিকিৎসা রিপোর্ট ইত্যাদি)।\n\n### সাধারণ পরামর্শ\n- **কোনো পশু মৃত্যুবরণ করলে**: মৃত পশুকে খুলতে নিষেধ। প্রাণিসম্পদ কর্মকর্তাদের কাছে অবিলম্বে জানাতে হবে।\n- **নিয়মিত তত্ত্বাবধান**: পশুদের স্বাস্থ্য ও পুষ্টির জন্য নিয়মিত তত্ত্বাবধান করতে হবে।\n- **টিকা ও চিকিৎসা**: পশুদের নিরাপদ ও সুস্থ রাখার জন্য নির্দিষ্ট সময়ে টিকা দেওয়া ও প্রয়োজনীয় চিকিৎসা করতে হবে।\n\nআশা করি এই তথ্যগুলি আপনাকে সাহায্য করবে। আরও কোনো প্রশ্ন থাকলে অবশ্যই জানান।"
+   }
+  ]
+ },
+ "vet:tst-17889406": {
+  "updated": 1788940735.7621045,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar goru te jor, khaye na, ki hote pare?"
+   },
+   {
+    "role": "assistant",
+    "content": "apnar gorur khete nite jor hole, eta hoite shudhu ekta karon hoye thakte pare, kintu amra shothik khola dukkho lagaite hobe. \n\n(ক) সম্ভাব্য রোগ/সমস্যা:\n- গরুর পেটে gas বা bloat হয়ে থাকতে পারে\n- কীট বা parasite attack হয়ে থাকতে পারে\n- কোনো আহার্য সামগ্রী খেয়ে ফাঁসা হয়ে থাকতে পারে\n- কোনো জ্বর বা fever হয়ে থাকতে পারে\n\n(খ) ঘরোয়া/প্রাথমিক ব্যবস্থা:\n- গরুকে শান্ত একটা জায়গায় রেখে দিন\n- পর্যাপ্ত পানি দিন, কিন্তু একসাথে অনেক পানি খাওয়াবেন না\n- কিছু মিষ্টি ঘি দিয়ে গরুর মুখে দিতে পারেন\n- গরুর পেটে মালমশলা মেখে মালিশ করতে পারেন\n\n(গ) কখন ভেটেরিনারি ডাক্তার দেখাতে হবে:\n- যদি গরু 24 ঘন্টার মধ্যে কিছুই খায় না বা দুর্বল হয়ে যায়\n- যদি গরুর পেট ফুলে যায় বা কষ্ট পায়\n- যদি গরুর ক্ষীণতা বা জ্বর বেড়ে যায়\n\nগরুটির অবস্থা যদি উন্নত না হয় বা খারাপ হয়, তাহলে নিকটস্থ প্রাণি চিকিৎসালয়ে বা উপজেলা প্রাণিসম্পদ দপ্তরে যোগাযোগ করুন। হেল্পলাইন 1962 এ যোগাযোগ করা যেতে পারে।"
+   },
+   {
+    "role": "user",
+    "content": "emon korleo jodi bhalo na hoy tobe kothay neya jabe?"
+   },
+   {
+    "role": "assistant",
+    "content": "jodi apnar gorur shothik pariborton dekha jay na, tahole amra prottom bhalo kore bhalo kaj korbo:\n\n1. **Nikotostho Pashu Chikitsalay:**\n   - Apni area-er kono pashu chikitsalay achen kina check korun. Google Maps a thakle search korte paren \"Pashu Chikitsalay near me\" বা \"নিকটস্থ প্রাণি চিকিৎসালয়\".\n\n2. **Upazila/Thana Pashu Sompad Daptar:**\n   - Apni upazila/thana-er pashu sampad daptar achen. Apni upazila/thana-er ওয়েবসাইট বা ফোন নম্বর দেখে যোগাযোগ করতে পারেন।\n\n3. **Helpline 1962:**\n   - Dhaka niye thakle 1962 নম্বরে ফোন করতে পারেন। এই হেল্পলাইন থেকে আপনি পেশাদার পরামর্শ পেতে পারেন এবং নিকটস্থ চিকিৎসকের ঠিকানা পেতে পারেন।\n\n4. **Local Pashu Chikitsak:**\n   - Apni area-er kono local pashu chikitsak achen kina shudhu jante hote paren. Gaon-er dokan-er owner, kishor, বা অন্যান্য কৃষকদের কাছ থেকে তথ্য সংগ্রহ করতে পারেন।\n\n5. **Online Resources:**\n   - Internet a pashu chikitsa-er সম্পর্কিত অনেক তথ্য পাওয়া যায়। Online forums, YouTube ভিডিও, বা স্পেশালিজড ওয়েবসাইট দেখে আরও সাহায্য পেতে পারেন।\n\napni gorur abostha shudhu কিছু দিনেই ভালো হওয়া উচিত, kintu jodi problem ta thik kore na hoy tahole prottom prochar jonno specialist-er sathe contact korun."
+   }
+  ]
+ },
+ "vet:uid_mttt90kr3ep8": {
+  "updated": 1788941059.933909,
+  "history": [
+   {
+    "role": "user",
+    "content": "hi amake bnegali answer dau"
+   },
+   {
+    "role": "assistant",
+    "content": "ঠিক আছে, আমি বাংলায় উত্তর দিচ্ছি। আপনি কী সম্পর্কে জানতে চাইছেন? কোনো পশুর সমস্যা নিয়ে প্রশ্ন করুন।"
+   },
+   {
+    "role": "user",
+    "content": "hindi te bolo"
+   },
+   {
+    "role": "assistant",
+    "content": "ठीक है, हिन्दी में बोल रहा हूँ। आप किस बारे में पूछना चाहते हैं? किसी पशु की समस्या या स्वास्थ्य से संबंधित कोई प्रश्न पुछिए।"
+   }
+  ]
+ },
+ "vet:uid_mttufrtxz3m5": {
+  "updated": 1788943624.8096979,
+  "history": [
+   {
+    "role": "user",
+    "content": "hi bengali te bolo"
+   },
+   {
+    "role": "assistant",
+    "content": "হ্যালো! আমি তোমার প্রশ্ন বা সমস্যার সাথে সাহায্য করতে চাই। আমি বাংলায় কথা বলতে পারি। তোমার কী প্রশ্ন আছে? গরু, মুরগি, ছাগল, ভেড়া, কুকুর বা অন্য কোনো পশু সম্পর্কিত কোনো সমস্যা হলে বলে দাও, আমি তোমার সাহায্য করব।"
+   }
+  ]
+ },
+ "vet:uid_mtu6x3mx6eqj": {
+  "updated": 1788967423.9709566,
+  "history": [
+   {
+    "role": "user",
+    "content": "hi"
+   },
+   {
+    "role": "assistant",
+    "content": "Hello! I am **PashuSahaya**, your AI veterinary assistant. \n\nHow can I help you today? Please tell me about your animal (cow, goat, poultry, pet, etc.) and any symptoms or questions you have regarding:\n\n- Disease symptoms or emergencies\n- Vaccination and prevention\n- Nutrition and care\n- Breeding and management\n\n*Note: For urgent medical issues, please contact your nearest local veterinary officer or call the national livestock helpline at 1962.*"
+   },
+   {
+    "role": "user",
+    "content": "hi amr dog er jor hoyeche ki korbo bolotoh"
+   },
+   {
+    "role": "assistant",
+    "content": "Hello! Dog-er jor (fever) howa kono infection ba roger sposhto lokkhon hote pare. Unnat chikits"
+   },
+   {
+    "role": "user",
+    "content": "amr dog kemon akta paglamo korche ki korbo"
+   },
+   {
+    "role": "assistant",
+    "content": "Chinta korben na, ami apnake shahajjo korchhi. Dog unusual behavior ba unusual aggression (paglamo) dekhale shurokk"
+   },
+   {
+    "role": "user",
+    "content": "my dog somthing show like mad what id do"
+   },
+   {
+    "role": "assistant",
+    "content": "Hello! Please stay calm, but prioritize your safety right now. Sudden \"mad\" or abnormal behavior in a dog requires immediate attention and caution."
+   },
+   {
+    "role": "user",
+    "content": "bengali te bolo"
+   },
+   {
+    "role": "assistant",
+    "content": "আপনার কুকুরের হঠাৎ অস্বাভাবিক বা পাগলাটে আচরণ করা একটি জরুরি স্বাস্থ্য সমস্যা হতে পারে। এতে আতঙ্কিত না হয়ে অবিলম্বে সতর্কতামূলক ব্যবস্থা নিন।"
+   }
+  ]
+ },
+ "gemtest": {
+  "updated": 1788964444.4941144,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar buk betha korche, ki korte parbo?"
+   },
+   {
+    "role": "assistant",
+    "content": "**সতর্কতা:** আমার এই তথ্যগুলো কোনো ডাক্তারি নির্ণয় বা সরাসরি চিকিৎসা নয়, শুধুমাত্র সাধারণ তথ"
+   }
+  ]
+ },
+ "vet:gemtest-vet": {
+  "updated": 1788964464.5646248,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar gorur gai te dana poreche eta ki?"
+   },
+   {
+    "role": "assistant",
+    "content": "Apnar gorur gaye dana ba fula dekhe mone hochhe eta **Lumpy Skin Disease (LSD)** ba kono allergic reaction"
+   }
+  ]
+ },
+ "vet:lang-vet": {
+  "updated": 1788966896.492128,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar gorur gai te dana poreche eta ki?"
+   },
+   {
+    "role": "assistant",
+    "content": "Apnar gorur gaye dana ba fola dekha deoya sombhoboto **Lumpy Skin Disease (LSD)** er lokkh"
+   }
+  ]
+ },
+ "__conn_test__": {
+  "updated": 1788975912.7067623,
+  "history": [
+   {
+    "role": "user",
+    "content": "t1"
+   },
+   {
+    "role": "assistant",
+    "content": "r1"
+   }
+  ]
+ },
+ "vet:move-test-1": {
+  "updated": 1788976515.016263,
+  "history": [
+   {
+    "role": "user",
+    "content": "amar gorur gai te dana poreche eta ki korbo?"
+   },
+   {
+    "role": "assistant",
+    "content": "**1) Sombhabo Rog o Lokkhon (Possible Disease & Symptoms):**\nApnar gorur gaye dana ba gouta"
+   },
+   {
+    "role": "user",
+    "content": "amar gorur gai te dana poreche eta ki korbo?"
+   },
+   {
+    "role": "assistant",
+    "content": "**১) সম্ভাব্য রোগ ও লক্ষণ:**\nআপনার গরুর গায়ে দানা বা গুটি দেখে মনে হচ্ছে এটি **Lumpy Skin Disease (L"
+   }
+  ]
+ },
+ "vet:pro-vet": {
+  "updated": 1788978521.364083,
+  "history": [
+   {
+    "role": "user",
+    "content": "my cow has fever and nodules, what to do?"
+   },
+   {
+    "role": "assistant",
+    "content": "Based on your description of fever and nodules on your cow, it is highly possible that your cow is suffering from **Lumpy Skin Disease (LSD)**. Other conditions might also present with fever and skin lesions, but LSD is a significant concern given these symptoms.\n\nHere are some immediate steps you can take:\n1.  **Isolate the animal:** Immediately separate the affected cow from healthy animals to prevent the potential spread of the disease.\n2.  **Provide supportive care:** Ensure the cow has access to fresh, clean water and soft, easily digestible feed.\n3.  **Maintain hygiene:** Keep the cow's living area clean and dry.\n4.  **Vector"
+   }
+  ]
+ },
+ "pro-med": {
+  "updated": 1788978525.2919638,
+  "history": [
+   {
+    "role": "user",
+    "content": "কী করলে গরুর দানা সেরে যাবে?"
+   },
+   {
+    "role": "assistant",
+    "content": "আমি একজন মেডিকেল তথ্যদাতা সহকারী এবং শুধুমাত্র মানুষের স্বাস্থ্য সম্পর্কিত প্রশ্নের উত্তর দিতে পারি। গরুর দানা বা পশুর স্বাস্থ্য সংক্রান্ত বিষয়ে আমি কোনো তথ্য দিতে অক্ষম। এই বিষয়ে জানতে হলে একজন পশুচিকিৎসকের (veterinarian) সাথে যোগাযোগ করার পরামর্শ দেব।"
+   }
+  ]
+ }
+}

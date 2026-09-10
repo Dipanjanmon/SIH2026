@@ -50,3 +50,6 @@ application-local.properties
 *.iml
 .DS_Store
 Thumbs.db
+# Secrets
+credentials.json
+service-account.json
